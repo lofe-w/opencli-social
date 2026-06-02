@@ -1,0 +1,16 @@
+{
+  "name": "opencli-publisher",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --test packages/*/test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
+

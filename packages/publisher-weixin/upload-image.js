@@ -1,0 +1,25 @@
+import { cli, Strategy } from '@jackwener/opencli/registry';
+import { getAccessToken, requireExecute, uploadPermanentImage } from './lib/weixin.js';
+
+cli({
+  site: 'publisher-weixin',
+  name: 'upload-image',
+  access: 'write',
+  description: 'Upload permanent image material for WeChat Official Account article covers',
+  strategy: Strategy.LOCAL,
+  browser: false,
+  args: [
+    { name: 'image', positional: true, required: true, help: 'Local image path' },
+    { name: 'execute', type: 'bool', default: false, help: 'Actually upload the image' },
+  ],
+  columns: ['status', 'media_id', 'url', 'path'],
+  func: async (kwargs) => {
+    if (!requireExecute(kwargs)) {
+      return [{ status: 'dry_run', media_id: '', url: '', path: String(kwargs.image || '') }];
+    }
+    const token = await getAccessToken();
+    const uploaded = await uploadPermanentImage(kwargs.image, token.accessToken);
+    return [{ status: 'uploaded', media_id: uploaded.mediaId, url: uploaded.url, path: uploaded.path }];
+  },
+});
+

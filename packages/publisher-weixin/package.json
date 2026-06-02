@@ -1,0 +1,8 @@
+{
+  "name": "publisher-weixin",
+  "version": "0.1.0",
+  "type": "module",
+  "peerDependencies": {
+    "@jackwener/opencli": ">=1.8.0"
+  }
+}

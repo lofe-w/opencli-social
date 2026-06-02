@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "opencli": ">=1.8.0",
+  "description": "Publisher plugins for OpenCLI",
+  "plugins": {
+    "publisher-weixin": {
+      "path": "packages/publisher-weixin",
+      "description": "Publish WeChat Official Account articles"
+    }
+  }
+}
