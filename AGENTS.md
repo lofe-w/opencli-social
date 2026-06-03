@@ -1,63 +1,62 @@
-# OpenCLI Publisher - Agent Guide
+# OpenCLI Social - Agent 指南
 
-This file is the main entrypoint for agents working in this repository. It mirrors `CLAUDE.md`; keep both files in sync.
+本文件是 Agent 在本仓库工作的主要入口。它与 `CLAUDE.md` 互为镜像；请保持两个文件同步。
 
-## Project Overview
+## 项目概览
 
-OpenCLI Publisher is a monorepo of OpenCLI plugins for publishing content to social platforms. Each platform lives in its own sub-plugin and uses a `publisher-<platform>` command namespace to avoid collisions with built-in OpenCLI adapters.
+OpenCLI Social 是一组用于操作社交和内容平台的 OpenCLI 插件 monorepo。每个平台位于独立的子插件中，并使用 `social-<platform>` 命令命名空间，以避免与 OpenCLI 内置适配器冲突。
 
-Phase 1 implements `publisher-weixin`, a WeChat Official Account publishing plugin backed by official WeChat API endpoints.
+第 1 阶段实现 `social-weixin`，这是一个基于微信官方 API 端点的微信公众号运营插件。当前覆盖发布链路，并为后续的评论、已发布内容和数据查询能力预留领域边界。
 
-## Tech Stack
+## 技术栈
 
-| Area | Technology |
+| 领域 | 技术 |
 |---|---|
-| Runtime | Node.js 20+ |
-| Plugin host | OpenCLI plugin system |
-| Package layout | npm workspaces |
-| Commands | ESM JavaScript files registered via `@jackwener/opencli/registry` |
-| Auth | Environment variables and WeChat Official Account access tokens |
+| 运行时 | Node.js 20+ |
+| 插件宿主 | OpenCLI 插件系统 |
+| 包布局 | npm workspaces |
+| 命令 | 通过 `@jackwener/opencli/registry` 注册的 ESM JavaScript 文件 |
+| 认证 | 环境变量和微信公众号 access token |
 
-## Documentation Map
+## 文档地图
 
-| Path | Purpose | When to read |
+| 路径 | 用途 | 阅读时机 |
 |---|---|---|
-| `design/CLAUDE.md` | Design documentation index | Before feature work |
-| `design/domain.md` | Domain language and cross-platform publishing model | Before implementing commands |
-| `design/02_platforms/weixin_official_account.md` | WeChat Official Account API model and command map | Before changing `publisher-weixin` |
-| `design/03_implementation_guide/opencli_plugin_guide.md` | OpenCLI plugin implementation conventions | Before adding commands or packages |
-| `packages/publisher-weixin/CLAUDE.md` | WeChat plugin local guide | Before editing that package |
-| `issues/` | Local issues and implementation notes | When planning work |
-| `memory/` | Durable project memory | When resuming context |
+| `design/CLAUDE.md` | 设计文档索引 | 开始功能开发前 |
+| `design/domain.md` | 领域语言和跨平台社交平台运营模型 | 实现命令前 |
+| `design/02_platforms/weixin_official_account.md` | 微信公众号 API 模型和命令地图 | 修改 `social-weixin` 前 |
+| `design/03_implementation_guide/opencli_plugin_guide.md` | OpenCLI 插件实现约定 | 添加命令或包前 |
+| `packages/social-weixin/CLAUDE.md` | 微信插件本地指南 | 编辑该包前 |
+| `issues/` | 本地 issue 和实现说明 | 规划工作时 |
+| `memory/` | 持久化项目记忆 | 恢复上下文时 |
 
-## Global Rules
+## 全局规则
 
-1. Read `design/domain.md` before feature development.
-2. Use official platform APIs when available. Use browser UI automation only when a platform has no official API for the required capability.
-3. Publishing commands are write operations. They must declare `access: 'write'` and use explicit, typed failures for expected platform errors.
-4. Do not silently publish when validation fails. If a field cannot be applied or verified, throw before submitting.
-5. Keep command namespaces distinct from OpenCLI built-ins. Use `publisher-weixin`, `publisher-xiaohongshu`, etc.
-6. Plugin command files that call `cli(...)` must live directly in each plugin package root because OpenCLI scans plugin directories flatly.
-7. Helper modules may live in package subdirectories such as `lib/`.
-8. New markdown documents must be added to the nearest `CLAUDE.md` index.
-9. Keep temporary captures, screenshots, and raw API samples in `tmp/` or `memory/`, not in package roots.
-10. Keep `AGENTS.md` and `CLAUDE.md` synchronized.
+1. 功能开发前先阅读 `design/domain.md`。
+2. 平台提供官方 API 时优先使用官方 API。只有当平台没有所需能力的官方 API 时，才使用浏览器 UI 自动化。
+3. 所有会创建、修改、删除、回复或提交远端状态的命令都属于写操作，必须声明 `access: 'write'`，并对预期的平台错误使用显式、带类型的失败。
+4. 校验失败时不要静默执行。如果某个字段、过滤条件或操作无法应用或验证，必须在远端写入前抛错。
+5. 保持命令命名空间与 OpenCLI 内置命令区分开，例如使用 `social-weixin`、`social-xiaohongshu` 等。
+6. 调用 `cli(...)` 的插件命令文件必须直接位于各插件包根目录，因为 OpenCLI 会扁平扫描插件目录。
+7. 辅助模块可以放在包内子目录，例如 `lib/`。
+8. 新增 Markdown 文档时，必须加入最近的 `CLAUDE.md` 索引。
+9. 临时捕获内容、截图和原始 API 样本应放在 `tmp/` 或 `memory/`，不要放在包根目录。
+10. 保持 `AGENTS.md` 和 `CLAUDE.md` 同步。
 
-## Development Commands
+## 开发命令
 
 ```bash
 npm test
-opencli plugin install file:///Users/fushuai/GitRepository/opencli-publisher/packages/publisher-weixin
-opencli publisher-weixin auth
+opencli plugin install file:///Users/fushuai/GitRepository/opencli-social/packages/social-weixin
+opencli social-weixin auth
 ```
 
-## Distribution
+## 分发
 
-During local development, install sub-plugin directories with `file://`. After publishing the repository to GitHub, users can install the whole monorepo or a specific sub-plugin:
+本地开发期间，使用 `file://` 安装子插件目录。仓库发布到 GitHub 后，用户可以安装整个 monorepo 或指定子插件：
 
 ```bash
-opencli plugin install github:<owner>/opencli-publisher
-opencli plugin install github:<owner>/opencli-publisher/publisher-weixin
-opencli plugin update publisher-weixin
+opencli plugin install github:<owner>/opencli-social
+opencli plugin install github:<owner>/opencli-social/social-weixin
+opencli plugin update social-weixin
 ```
-

@@ -4,8 +4,11 @@ import {
   buildArticle,
   compactArticleForOutput,
   getAccessToken,
-  readTextArg,
+  preflightArticleInput,
+  readContentInput,
   requireExecute,
+  rewriteInlineImages,
+  uploadContentImage,
   uploadPermanentImage,
 } from './lib/weixin.js';
 
@@ -18,6 +21,7 @@ const articleArgs = [
   { name: 'source-url', required: false, help: 'Original source URL' },
   { name: 'thumb-media-id', required: false, help: 'Existing permanent image media_id for cover' },
   { name: 'cover-image', required: false, help: 'Local cover image to upload as permanent material first' },
+  { name: 'upload-inline-images', type: 'bool', default: false, help: 'Upload local HTML inline images and replace src values' },
   { name: 'show-cover-pic', type: 'bool', default: false, help: 'Show cover image in article body' },
   { name: 'need-open-comment', type: 'bool', default: false, help: 'Enable comments' },
   { name: 'only-fans-can-comment', type: 'bool', default: false, help: 'Restrict comments to followers' },
@@ -27,7 +31,7 @@ const articleArgs = [
 ];
 
 cli({
-  site: 'publisher-weixin',
+  site: 'social-weixin',
   name: 'draft-add',
   access: 'write',
   description: 'Create a single-article WeChat Official Account draft',
@@ -36,16 +40,16 @@ cli({
   args: articleArgs,
   columns: ['status', 'media_id', 'title', 'thumb_media_id', 'detail'],
   func: async (kwargs) => {
-    const content = readTextArg(kwargs);
-    if (!requireExecute(kwargs)) {
-      const thumbMediaId = String(kwargs['thumb-media-id'] || '');
-      const dryArticle = buildArticle(kwargs, content, thumbMediaId || 'dry_run_thumb_media_id');
+    const contentInput = readContentInput(kwargs);
+    const isExecute = requireExecute(kwargs);
+    const preflight = await preflightArticleInput(kwargs, contentInput, { allowMissingThumb: !isExecute });
+    if (!isExecute) {
       return [{
         status: 'dry_run',
         media_id: '',
-        title: dryArticle.title,
-        thumb_media_id: thumbMediaId,
-        detail: JSON.stringify(compactArticleForOutput(dryArticle)),
+        title: preflight.article.title,
+        thumb_media_id: preflight.article.thumb_media_id,
+        detail: JSON.stringify({ ...compactArticleForOutput(preflight.article), inline_images: preflight.rewritten.images }),
       }];
     }
 
@@ -55,15 +59,19 @@ cli({
       const uploaded = await uploadPermanentImage(kwargs['cover-image'], token.accessToken);
       thumbMediaId = uploaded.mediaId;
     }
-    const article = buildArticle(kwargs, content, thumbMediaId);
+    const rewritten = await rewriteInlineImages(contentInput.content, {
+      enabled: kwargs['upload-inline-images'],
+      baseDir: contentInput.baseDir,
+      uploadImage: (filePath) => uploadContentImage(filePath, token.accessToken),
+    });
+    const article = buildArticle(kwargs, rewritten.content, thumbMediaId);
     const draft = await addDraft(article, token.accessToken);
     return [{
       status: 'draft_created',
       media_id: draft.mediaId,
       title: article.title,
       thumb_media_id: article.thumb_media_id,
-      detail: JSON.stringify(compactArticleForOutput(article)),
+      detail: JSON.stringify({ ...compactArticleForOutput(article), inline_images: rewritten.images }),
     }];
   },
 });
-

@@ -1,23 +1,23 @@
-# Product Overview
+# 产品概览
 
-OpenCLI Publisher provides shareable publishing plugins for OpenCLI users who need richer platform publishing workflows than the built-in adapters currently expose.
+OpenCLI Social 为 OpenCLI 用户提供可共享的社交和内容平台运营插件，用于补足内置适配器当前尚未覆盖的、更完整的平台工作流。
 
-## Phase 1
+## 第 1 阶段
 
-Implement WeChat Official Account publishing through official WeChat API endpoints:
+通过微信官方 API 端点实现微信公众号文章发布链路：
 
-- fetch or validate access token
-- upload permanent cover image material
-- upload inline content images
-- create article draft
-- submit draft for publication
-- query publish status
-- provide a composite `publish-article` command
+- 获取或校验 access token
+- 上传永久封面图片素材
+- 上传正文内联图片
+- 创建文章草稿
+- 提交草稿发布
+- 查询发布状态
+- 提供组合命令 `publish-article`
 
-## Later Phases
+## 后续阶段
 
-- `publisher-xiaohongshu`: image notes and video notes through creator-center UI automation
-- `publisher-wechat-channels`: video publishing through video-account assistant UI automation
-- `publisher-douyin`: official Open Platform flow where possible
-- `publisher-kuaishou`: official Open Platform video creation flow
-
+- `social-weixin`：扩展已发布内容列表、评论管理、阅读和互动数据查询
+- `social-xiaohongshu`：通过创作者中心 UI 自动化发布图文笔记和视频笔记，并在可行时支持评论和数据读取
+- `social-wechat-channels`：通过视频号助手 UI 自动化发布视频，并逐步支持作品和互动数据
+- `social-douyin`：在可行时使用官方开放平台流程
+- `social-kuaishou`：使用官方开放平台视频创建流程，并逐步扩展运营能力

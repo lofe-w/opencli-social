@@ -1,5 +1,5 @@
 {
-  "name": "publisher-weixin",
+  "name": "social-weixin",
   "version": "0.1.0",
   "type": "module",
   "peerDependencies": {

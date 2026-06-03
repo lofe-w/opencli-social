@@ -1,48 +1,41 @@
-# opencli-publisher
+# opencli-social
 
-OpenCLI Publisher is a monorepo of publishing plugins for OpenCLI.
+OpenCLI Social is a monorepo of OpenCLI plugins for operating social and content platforms.
 
-Phase 1 ships `publisher-weixin`, a WeChat Official Account publishing plugin built on official WeChat API endpoints.
+Each platform lives in its own package and exposes a `social-<platform>` command namespace. Platform-specific setup, command examples, and API notes belong in the package README; this root README covers the workspace as a whole.
 
-## Install During Local Development
+## Packages
 
-```bash
-opencli plugin install file:///Users/fushuai/GitRepository/opencli-publisher/packages/publisher-weixin
-opencli publisher-weixin auth
-```
+| Package | Namespace | Status | Docs |
+|---|---|---|---|
+| `packages/social-weixin` | `social-weixin` | Phase 1: WeChat Official Account publishing | [`packages/social-weixin/README.md`](packages/social-weixin/README.md) |
 
-## Install From GitHub
+Planned platform packages and capability boundaries are tracked in [`design/00_product_overview/product_overview.md`](design/00_product_overview/product_overview.md) and [`design/domain.md`](design/domain.md).
 
-After this repository is pushed to GitHub:
-
-```bash
-opencli plugin install github:<owner>/opencli-publisher
-opencli plugin install github:<owner>/opencli-publisher/publisher-weixin
-opencli plugin update publisher-weixin
-```
-
-## WeChat Official Account Environment
-
-Set either the publisher-specific variables or the shorter fallback names:
+## Local Development
 
 ```bash
-export PUBLISHER_WEIXIN_APP_ID="wx..."
-export PUBLISHER_WEIXIN_APP_SECRET="..."
-
-# Optional: bypass appid/secret token exchange with a managed token.
-export PUBLISHER_WEIXIN_ACCESS_TOKEN="..."
+npm test
+opencli plugin install file:///Users/fushuai/GitRepository/opencli-social/packages/social-weixin
+opencli social-weixin doctor
 ```
 
-## Commands
+## GitHub Install
+
+After this repository is published to GitHub:
 
 ```bash
-opencli publisher-weixin auth
-opencli publisher-weixin upload-image ./cover.jpg
-opencli publisher-weixin draft-add "正文 HTML" --title "标题" --cover-image ./cover.jpg --execute
-opencli publisher-weixin publish <draft_media_id> --execute
-opencli publisher-weixin publish-status <publish_id>
-opencli publisher-weixin publish-article "正文 HTML" --title "标题" --cover-image ./cover.jpg --publish --execute
+opencli plugin install github:<owner>/opencli-social
+opencli plugin install github:<owner>/opencli-social/social-weixin
+opencli plugin update social-weixin
 ```
 
-See `packages/publisher-weixin/README.md` for details.
+## Documentation
 
+| Path | Purpose |
+|---|---|
+| [`design/CLAUDE.md`](design/CLAUDE.md) | Design document index |
+| [`design/domain.md`](design/domain.md) | Shared social platform operations language |
+| [`design/02_platforms/weixin_official_account.md`](design/02_platforms/weixin_official_account.md) | WeChat Official Account API and command model |
+| [`design/03_implementation_guide/opencli_plugin_guide.md`](design/03_implementation_guide/opencli_plugin_guide.md) | OpenCLI plugin implementation guide |
+| [`packages/social-weixin/README.md`](packages/social-weixin/README.md) | `social-weixin` setup, commands, validation, and live publishing checklist |

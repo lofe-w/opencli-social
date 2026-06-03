@@ -1,24 +1,38 @@
-# Publishing Domain
+# 社交平台运营领域
 
-OpenCLI Publisher models each social platform as a separate OpenCLI plugin namespace. A platform plugin owns its authentication model, media upload flow, draft lifecycle, publish submission, and publish-status query.
+OpenCLI Social 将每个社交或内容平台建模为独立的 OpenCLI 插件命名空间。平台插件负责自己的认证模型、平台资源、发布流程、内容列表、互动管理和数据查询。
 
-## Core Terms
+## 核心术语
 
-| Term | Meaning |
+| 术语 | 含义 |
 |---|---|
-| Platform plugin | One OpenCLI plugin package, such as `publisher-weixin` |
-| Command namespace | The OpenCLI `site` name exposed to users |
-| Article | A text-rich post, usually HTML for WeChat Official Account |
-| Media asset | An uploaded image or video referenced by platform-specific IDs |
-| Draft | Remote platform draft that can be reviewed or submitted |
-| Publish job | Remote submission from draft/content into platform review or publication |
-| Status query | A read command that maps platform status into a stable output row |
+| 平台插件 | 一个 OpenCLI 插件包，例如 `social-weixin` |
+| 命令命名空间 | 暴露给用户的 OpenCLI `site` 名称 |
+| 内容项 | 平台上的文章、笔记、视频或图文内容 |
+| 媒体资源 | 已上传或可引用的图片、视频、封面等素材 |
+| 草稿 | 远端平台草稿，可用于审核、编辑或提交 |
+| 发布任务 | 将草稿或内容远程提交到平台审核或发布流程 |
+| 已发布内容 | 平台已经发布或曾发布过的内容记录 |
+| 互动 | 评论、回复、点赞、收藏、分享等用户行为 |
+| 数据指标 | 阅读、浏览、互动、转化等平台统计值 |
+| 状态查询 | 将平台状态映射为稳定输出行的读取命令 |
 
-## Cross-Platform Rules
+## 能力域
 
-1. Official APIs are preferred over UI automation.
-2. Write commands require explicit confirmation through `--execute` when they create or submit remote content.
-3. Commands should return remote IDs, not just status text.
-4. Composite commands may call lower-level helpers but should preserve intermediate IDs in output.
-5. Dry-run output must report what would be sent without mutating remote state.
+| 能力域 | 典型命令 | 说明 |
+|---|---|---|
+| Account | `auth`, `doctor` | 认证、缓存、API 可用性和账号配置诊断 |
+| Publishing | `upload-*`, `draft-*`, `publish-*` | 素材上传、草稿创建、提交发布和发布状态查询 |
+| Content Library | `posts list`, `posts get` | 查询已发布内容、草稿和平台内容详情 |
+| Engagement | `comments list`, `comments reply` | 评论读取、回复、删除、精选等互动管理 |
+| Analytics | `analytics *` | 阅读、浏览、互动、粉丝等数据查询 |
+| Escape Hatch | `request` | 受保护的原始 API 请求，用于尚未建模的平台能力 |
 
+## 跨平台规则
+
+1. 优先使用官方 API，而不是 UI 自动化。
+2. 写命令在创建、修改、删除、回复或提交远程状态时，需要通过 `--execute` 明确确认。
+3. 命令应返回远端 ID，而不仅是状态文本。
+4. 组合命令可以调用底层辅助函数，但输出中应保留中间 ID。
+5. dry-run 输出必须报告将要执行的远端操作，并且不能改变远端状态。
+6. 平台原始字段和规范化字段应同时保留，避免为了跨平台抽象丢失决策信息。
