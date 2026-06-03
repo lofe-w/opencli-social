@@ -1,11 +1,11 @@
 {
   "version": "0.1.0",
   "opencli": ">=1.8.0",
-  "description": "Publisher plugins for OpenCLI",
+  "description": "Social platform plugins for OpenCLI",
   "plugins": {
-    "publisher-weixin": {
-      "path": "packages/publisher-weixin",
-      "description": "Publish WeChat Official Account articles"
+    "social-weixin": {
+      "path": "packages/social-weixin",
+      "description": "Operate WeChat Official Account publishing and social workflows"
     }
   }
 }

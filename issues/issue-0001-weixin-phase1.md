@@ -1,23 +1,22 @@
-# Issue 0001 - WeChat Official Account Phase 1
+# Issue 0001 - 微信公众号第 1 阶段
 
-## Goal
+## 目标
 
-Implement `publisher-weixin` with official WeChat API publishing commands.
+使用微信官方 API 发布命令实现 `social-weixin`。
 
-## Scope
+## 范围
 
 - auth
-- upload permanent image material
-- upload inline image
-- add single-article draft
-- submit draft
-- query publish status
-- composite publish-article
+- 上传永久图片素材
+- 上传内联图片
+- 新增单篇文章草稿
+- 提交草稿
+- 查询发布状态
+- 组合命令 publish-article
 
-## Out Of Scope
+## 范围外
 
-- browser UI automation
-- multi-article draft files
-- scheduled mass send
-- comment management beyond article draft flags
-
+- 浏览器 UI 自动化
+- 多图文草稿文件
+- 定时群发
+- 超出文章草稿标志位之外的评论管理

@@ -2,7 +2,7 @@ import { cli, Strategy } from '@jackwener/opencli/registry';
 import { getAccessToken, requireExecute, uploadPermanentImage } from './lib/weixin.js';
 
 cli({
-  site: 'publisher-weixin',
+  site: 'social-weixin',
   name: 'upload-image',
   access: 'write',
   description: 'Upload permanent image material for WeChat Official Account article covers',

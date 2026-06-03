@@ -1,6 +1,0 @@
-{
-  "name": "publisher-weixin",
-  "version": "0.1.0",
-  "opencli": ">=1.8.0",
-  "description": "Publish WeChat Official Account articles"
-}

@@ -2,7 +2,7 @@ import { cli, Strategy } from '@jackwener/opencli/registry';
 import { getAccessToken } from './lib/weixin.js';
 
 cli({
-  site: 'publisher-weixin',
+  site: 'social-weixin',
   name: 'auth',
   access: 'read',
   description: 'Validate WeChat Official Account token acquisition',
@@ -10,10 +10,16 @@ cli({
   browser: false,
   args: [
     { name: 'no-cache', type: 'bool', default: false, help: 'Ignore cached access token and fetch a fresh token' },
+    { name: 'force-refresh', type: 'bool', default: false, help: 'Force refresh stable access token; use sparingly' },
+    { name: 'legacy-token', type: 'bool', default: false, help: 'Use legacy /cgi-bin/token instead of stable_token' },
   ],
   columns: ['status', 'source', 'expires_at'],
   func: async (kwargs) => {
-    const token = await getAccessToken({ noCache: kwargs['no-cache'] === true });
+    const token = await getAccessToken({
+      noCache: kwargs['no-cache'] === true,
+      forceRefresh: kwargs['force-refresh'] === true,
+      legacyToken: kwargs['legacy-token'] === true,
+    });
     return [{
       status: 'ok',
       source: token.source,
@@ -21,4 +27,3 @@ cli({
     }];
   },
 });
-
