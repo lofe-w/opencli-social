@@ -4,13 +4,13 @@
 
 ## 环境变量
 
-先在微信开发者平台获取公众号凭据：
+先按微信官方文档获取公众号凭据并配置 API IP 白名单：
 
 1. 登录 [微信开发者平台](https://developers.weixin.qq.com/platform/)。
-2. 点击进入对应公众号。
-3. 在公众号基础信息里查看 `开发者ID(AppID)`。
-4. 在 `开发密钥` 区域查看 `开发者密码(AppSecret)`。如果 `AppSecret` 没有直接显示，通常需要点击 `启用`、`查看` 或 `重置` 后再获取。
-5. 在同一 `开发密钥` 区域找到 `API IP白名单`，点击 `编辑`，添加运行 `opencli social-weixin` 的机器或服务器出口公网 IP。
+2. 使用微信扫码登录后，进入 `我的业务 - 公众号/服务号`，点击对应公众号进入详情页。
+3. 在详情页查看 `AppID` 和 `AppSecret` 信息。具体以官方文档 [如何查看和重置 AppSecret](https://developers.weixin.qq.com/doc/oplatform/developers/dev/appid.html) 为准。
+4. 如果已经忘记 `AppSecret`，通过 `重置` 重新生成并妥善保存。微信官方说明平台不会储存和显示 `AppSecret`；重置后旧 `AppSecret` 会失效，需要同步更新所有使用它的系统。
+5. 继续进入 `基础信息 - 开发信息`，在 `API IP白名单` 中添加运行 `opencli social-weixin` 的机器或服务器出口公网 IP。配置规则以官方文档 [API IP 白名单](https://developers.weixin.qq.com/doc/oplatform/developers/basic_func/ip_whitelist.html) 为准。
 
 使用 AppID/AppSecret 获取 access token 时，微信会校验 API IP 白名单。如果本地网络、办公出口或部署服务器 IP 变化，需要同步更新白名单。
 
