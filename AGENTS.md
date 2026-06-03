@@ -33,15 +33,16 @@ OpenCLI Social 是一组用于操作社交和内容平台的 OpenCLI 插件 mono
 ## 全局规则
 
 1. 功能开发前先阅读 `design/domain.md`。
-2. 平台提供官方 API 时优先使用官方 API。只有当平台没有所需能力的官方 API 时，才使用浏览器 UI 自动化。
-3. 所有会创建、修改、删除、回复或提交远端状态的命令都属于写操作，必须声明 `access: 'write'`，并对预期的平台错误使用显式、带类型的失败。
-4. 校验失败时不要静默执行。如果某个字段、过滤条件或操作无法应用或验证，必须在远端写入前抛错。
-5. 保持命令命名空间与 OpenCLI 内置命令区分开，例如使用 `social-weixin`、`social-xiaohongshu` 等。
-6. 调用 `cli(...)` 的插件命令文件必须直接位于各插件包根目录，因为 OpenCLI 会扁平扫描插件目录。
-7. 辅助模块可以放在包内子目录，例如 `lib/`。
-8. 新增 Markdown 文档时，必须加入最近的 `CLAUDE.md` 索引。
-9. 临时捕获内容、截图和原始 API 样本应放在 `tmp/` 或 `memory/`，不要放在包根目录。
-10. 保持 `AGENTS.md` 和 `CLAUDE.md` 同步。
+2. 本项目是 CLI monorepo。开发任何 CLI 命令、命令契约、认证配置、输出格式或插件能力前，必须先使用 OpenAI curated `cli-creator` Skill（https://github.com/openai/skills/tree/main/skills/.curated/cli-creator），并按其命令契约、JSON 输出、认证、安全写入和验证流程执行；如果当前环境没有该 Skill 或无法正常使用，必须先安装并调试可用后再开始开发。
+3. 平台提供官方 API 时优先使用官方 API。只有当平台没有所需能力的官方 API 时，才使用浏览器 UI 自动化。
+4. 所有会创建、修改、删除、回复或提交远端状态的命令都属于写操作，必须声明 `access: 'write'`，并对预期的平台错误使用显式、带类型的失败。
+5. 校验失败时不要静默执行。如果某个字段、过滤条件或操作无法应用或验证，必须在远端写入前抛错。
+6. 保持命令命名空间与 OpenCLI 内置命令区分开，例如使用 `social-weixin`、`social-xiaohongshu` 等。
+7. 调用 `cli(...)` 的插件命令文件必须直接位于各插件包根目录，因为 OpenCLI 会扁平扫描插件目录。
+8. 辅助模块可以放在包内子目录，例如 `lib/`。
+9. 新增 Markdown 文档时，必须加入最近的 `CLAUDE.md` 索引。
+10. 临时捕获内容、截图和原始 API 样本应放在 `tmp/` 或 `memory/`，不要放在包根目录。
+11. 保持 `AGENTS.md` 和 `CLAUDE.md` 同步。
 
 ## 开发命令
 

@@ -4,6 +4,13 @@
 
 ## 环境变量
 
+先在微信开发者平台获取公众号凭据：
+
+1. 登录 [微信开发者平台](https://developers.weixin.qq.com/platform/)。
+2. 点击进入对应公众号。
+3. 在公众号开发配置页面查看 `开发者ID(AppID)` 和 `开发者密码(AppSecret)`。
+4. 如果 `AppSecret` 没有直接显示，通常需要点击 `启用`、`查看` 或 `重置` 后再获取。
+
 ```bash
 export SOCIAL_WEIXIN_APP_ID="wx..."
 export SOCIAL_WEIXIN_APP_SECRET="..."
