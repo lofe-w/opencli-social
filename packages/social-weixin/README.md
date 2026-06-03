@@ -8,8 +8,11 @@
 
 1. 登录 [微信开发者平台](https://developers.weixin.qq.com/platform/)。
 2. 点击进入对应公众号。
-3. 在公众号开发配置页面查看 `开发者ID(AppID)` 和 `开发者密码(AppSecret)`。
-4. 如果 `AppSecret` 没有直接显示，通常需要点击 `启用`、`查看` 或 `重置` 后再获取。
+3. 在公众号基础信息里查看 `开发者ID(AppID)`。
+4. 在 `开发密钥` 区域查看 `开发者密码(AppSecret)`。如果 `AppSecret` 没有直接显示，通常需要点击 `启用`、`查看` 或 `重置` 后再获取。
+5. 在同一 `开发密钥` 区域找到 `API IP白名单`，点击 `编辑`，添加运行 `opencli social-weixin` 的机器或服务器出口公网 IP。
+
+使用 AppID/AppSecret 获取 access token 时，微信会校验 API IP 白名单。如果本地网络、办公出口或部署服务器 IP 变化，需要同步更新白名单。
 
 ```bash
 export SOCIAL_WEIXIN_APP_ID="wx..."
