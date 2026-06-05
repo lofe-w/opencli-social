@@ -25,6 +25,7 @@ OpenCLI Social 是一组用于操作社交和内容平台的 OpenCLI 插件 mono
 | `design/CLAUDE.md` | 设计文档索引 | 开始功能开发前 |
 | `design/domain.md` | 领域语言和跨平台社交平台运营模型 | 实现命令前 |
 | `design/02_platforms/weixin_official_account.md` | 微信公众号 API 模型和命令地图 | 修改 `social-weixin` 前 |
+| `design/02_platforms/weixin_channels.md` | 微信视频号发布插件、浏览器会话边界和 HITL 设计 | 设计或实现视频号发布前 |
 | `design/03_implementation_guide/opencli_plugin_guide.md` | OpenCLI 插件实现约定 | 添加命令或包前 |
 | `packages/social-weixin/CLAUDE.md` | 微信插件本地指南 | 编辑该包前 |
 | `issues/` | 本地 issue 和实现说明 | 规划工作时 |
