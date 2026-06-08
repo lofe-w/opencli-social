@@ -455,12 +455,6 @@ export async function getAccessToken(options = {}) {
     return { accessToken, source: 'env', expiresAt: null };
   }
 
-  if (!appId || !appSecret) {
-    throw new ArgumentError(
-      'Missing WeChat credentials for the current OpenCLI profile. Run auth-config with --app-id and --app-secret-stdin.'
-    );
-  }
-
   if (!options.noCache) {
     const cached = readTokenCache(options.env);
     if (
@@ -480,6 +474,12 @@ export async function getAccessToken(options = {}) {
         apiBase: apiBase(options.env),
       };
     }
+  }
+
+  if (!appId || !appSecret) {
+    throw new ArgumentError(
+      'Missing WeChat credentials for the current OpenCLI profile. Run auth-config with --app-id and --app-secret-stdin.'
+    );
   }
 
   const mode = tokenMode(options);

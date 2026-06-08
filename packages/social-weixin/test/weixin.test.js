@@ -149,6 +149,38 @@ test('doctor treats expired profile cache without a secret as missing auth', asy
   assert.equal(JSON.stringify(result).includes('expired-token'), false);
 });
 
+test('fresh profile token cache works even when app secret is unavailable', async () => {
+  const env = profileEnv();
+  const dir = path.join(env.OPENCLI_SOCIAL_HOME, 'profiles', env.OPENCLI_PROFILE, 'social-weixin');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify({
+    schema_version: 1,
+    platform: 'social-weixin',
+    profile: env.OPENCLI_PROFILE,
+    display_name: '测试公众号',
+    app_id: 'wx123',
+    api_base: 'https://api.weixin.qq.com',
+    secret_ref: 'profile-secret:app-secret',
+  }));
+  fs.writeFileSync(path.join(dir, 'token.json'), JSON.stringify({
+    appId: 'wx123',
+    mode: 'stable',
+    apiBase: 'https://api.weixin.qq.com',
+    accessToken: 'fresh-token',
+    expiresAt: Date.now() + 60 * 60 * 1000,
+  }));
+
+  const result = await doctor({ env });
+  assert.equal(result.status, 'ok');
+  assert.equal(result.auth_source, 'cache');
+  assert.equal(result.cache_fresh, true);
+
+  const token = await getAccessToken({ env });
+  assert.equal(token.accessToken, 'fresh-token');
+  assert.equal(token.source, 'cache');
+  assert.equal(token.profile, 'oa-test');
+});
+
 test('doctor can check token acquisition without printing the token', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response(JSON.stringify({ access_token: 'doctor-token', expires_in: 7200 }), { status: 200 });
