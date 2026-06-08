@@ -5,6 +5,8 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import {
   buildArticle,
+  configureProfileAuth,
+  currentProfile,
   describeAuthConfig,
   doctor,
   getAccessToken,
@@ -35,13 +37,10 @@ test('getAccessToken uses stable token endpoint by default', async () => {
   };
 
   try {
+    const env = configuredProfileEnv();
     const token = await getAccessToken({
       noCache: true,
-      env: {
-        SOCIAL_WEIXIN_APP_ID: 'wx123',
-        SOCIAL_WEIXIN_APP_SECRET: 'secret123',
-        SOCIAL_WEIXIN_CACHE_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-cache-')),
-      },
+      env,
     });
 
     assert.equal(token.accessToken, 'stable-token');
@@ -68,14 +67,11 @@ test('getAccessToken can use legacy token endpoint', async () => {
   };
 
   try {
+    const env = configuredProfileEnv();
     const token = await getAccessToken({
       noCache: true,
       legacyToken: true,
-      env: {
-        SOCIAL_WEIXIN_APP_ID: 'wx123',
-        SOCIAL_WEIXIN_APP_SECRET: 'secret123',
-        SOCIAL_WEIXIN_CACHE_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-cache-')),
-      },
+      env,
     });
 
     assert.equal(token.accessToken, 'legacy-token');
@@ -87,36 +83,56 @@ test('getAccessToken can use legacy token endpoint', async () => {
   }
 });
 
-test('describeAuthConfig reports auth readiness without exposing secrets', () => {
-  const config = describeAuthConfig({
-    SOCIAL_WEIXIN_ACCESS_TOKEN: 'secret-token',
-    SOCIAL_WEIXIN_API_BASE: 'https://api.weixin.qq.com/',
-    SOCIAL_WEIXIN_CACHE_DIR: '/tmp/social-weixin-test',
-  });
+test('describeAuthConfig reports profile auth readiness without exposing secrets', () => {
+  const env = configuredProfileEnv({ apiBase: 'https://api.weixin.qq.com/' });
+  const config = describeAuthConfig(env);
 
-  assert.equal(config.auth_source, 'env_access_token');
-  assert.equal(config.access_token_present, true);
+  assert.equal(config.auth_source, 'profile_config');
+  assert.equal(config.profile, 'oa-test');
+  assert.equal(config.account_name, '测试公众号');
+  assert.equal(config.access_token_present, false);
   assert.equal(config.ready, true);
-  assert.equal(JSON.stringify(config).includes('secret-token'), false);
+  assert.equal(JSON.stringify(config).includes('secret123'), false);
   assert.equal(config.api_base, 'https://api.weixin.qq.com');
 });
 
-test('doctor returns missing_auth instead of throwing when credentials are absent', async () => {
-  const result = await doctor({
-    env: {
-      SOCIAL_WEIXIN_CACHE_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-cache-')),
-    },
-  });
+test('currentProfile resolves OpenCLI default profile aliases', () => {
+  const configDir = fs.mkdtempSync(path.join(os.tmpdir(), 'opencli-config-'));
+  fs.writeFileSync(path.join(configDir, 'browser-profiles.json'), JSON.stringify({
+    version: 1,
+    aliases: { work: 'ctx123' },
+    defaultContextId: 'ctx123',
+  }));
+
+  assert.equal(currentProfile({ OPENCLI_CONFIG_DIR: configDir }), 'work');
+  assert.equal(currentProfile({ OPENCLI_CONFIG_DIR: configDir, OPENCLI_PROFILE: 'ctx123' }), 'work');
+  assert.equal(currentProfile({ OPENCLI_CONFIG_DIR: configDir, OPENCLI_PROFILE: 'personal' }), 'personal');
+});
+
+test('doctor returns missing_auth instead of throwing when profile is absent', async () => {
+  const result = await doctor({ env: { OPENCLI_CONFIG_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'opencli-config-')) } });
 
   assert.equal(result.status, 'missing_auth');
-  assert.equal(result.auth_source, 'missing');
+  assert.equal(result.auth_source, 'missing_profile');
+  assert.equal(result.profile, '');
   assert.equal(result.access_token_present, false);
   assert.equal(result.checks.some((check) => check.name === 'auth' && check.status === 'missing'), true);
 });
 
-test('doctor treats expired cache without app credentials as missing auth', async () => {
-  const cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-cache-'));
-  fs.writeFileSync(path.join(cacheDir, 'weixin-token.json'), JSON.stringify({
+test('doctor treats expired profile cache without a secret as missing auth', async () => {
+  const env = profileEnv();
+  const dir = path.join(env.OPENCLI_SOCIAL_HOME, 'profiles', env.OPENCLI_PROFILE, 'social-weixin');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify({
+    schema_version: 1,
+    platform: 'social-weixin',
+    profile: env.OPENCLI_PROFILE,
+    display_name: '测试公众号',
+    app_id: 'wx123',
+    api_base: 'https://api.weixin.qq.com',
+    secret_ref: 'profile-secret:app-secret',
+  }));
+  fs.writeFileSync(path.join(dir, 'token.json'), JSON.stringify({
     appId: 'wx123',
     mode: 'stable',
     apiBase: 'https://api.weixin.qq.com',
@@ -124,11 +140,7 @@ test('doctor treats expired cache without app credentials as missing auth', asyn
     expiresAt: Date.now() - 1000,
   }));
 
-  const result = await doctor({
-    env: {
-      SOCIAL_WEIXIN_CACHE_DIR: cacheDir,
-    },
-  });
+  const result = await doctor({ env });
 
   assert.equal(result.status, 'missing_auth');
   assert.equal(result.auth_source, 'stale_cache');
@@ -137,19 +149,48 @@ test('doctor treats expired cache without app credentials as missing auth', asyn
   assert.equal(JSON.stringify(result).includes('expired-token'), false);
 });
 
+test('fresh profile token cache works even when app secret is unavailable', async () => {
+  const env = profileEnv();
+  const dir = path.join(env.OPENCLI_SOCIAL_HOME, 'profiles', env.OPENCLI_PROFILE, 'social-weixin');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify({
+    schema_version: 1,
+    platform: 'social-weixin',
+    profile: env.OPENCLI_PROFILE,
+    display_name: '测试公众号',
+    app_id: 'wx123',
+    api_base: 'https://api.weixin.qq.com',
+    secret_ref: 'profile-secret:app-secret',
+  }));
+  fs.writeFileSync(path.join(dir, 'token.json'), JSON.stringify({
+    appId: 'wx123',
+    mode: 'stable',
+    apiBase: 'https://api.weixin.qq.com',
+    accessToken: 'fresh-token',
+    expiresAt: Date.now() + 60 * 60 * 1000,
+  }));
+
+  const result = await doctor({ env });
+  assert.equal(result.status, 'ok');
+  assert.equal(result.auth_source, 'cache');
+  assert.equal(result.cache_fresh, true);
+
+  const token = await getAccessToken({ env });
+  assert.equal(token.accessToken, 'fresh-token');
+  assert.equal(token.source, 'cache');
+  assert.equal(token.profile, 'oa-test');
+});
+
 test('doctor can check token acquisition without printing the token', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response(JSON.stringify({ access_token: 'doctor-token', expires_in: 7200 }), { status: 200 });
 
   try {
+    const env = configuredProfileEnv();
     const result = await doctor({
       checkToken: true,
       noCache: true,
-      env: {
-        SOCIAL_WEIXIN_APP_ID: 'wx123',
-        SOCIAL_WEIXIN_APP_SECRET: 'secret123',
-        SOCIAL_WEIXIN_CACHE_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-cache-')),
-      },
+      env,
     });
 
     assert.equal(result.status, 'ok');
@@ -169,10 +210,10 @@ test('rawRequest appends configured auth and parses JSON responses', async () =>
   };
 
   try {
+    const env = configuredProfileEnv();
     const result = await rawRequest('get', '/cgi-bin/test?x=1', {
-      env: {
-        SOCIAL_WEIXIN_ACCESS_TOKEN: 'secret-token',
-      },
+      env,
+      accessToken: 'secret-token',
     });
 
     assert.equal(result.status, 'ok');
@@ -414,3 +455,22 @@ test('parsePositiveInteger rejects invalid wait options', () => {
   assert.throws(() => parsePositiveInteger('0', 'interval-seconds'), /positive integer/);
   assert.throws(() => parsePositiveInteger('1.5', 'interval-seconds'), /positive integer/);
 });
+
+function profileEnv() {
+  return {
+    OPENCLI_PROFILE: 'oa-test',
+    OPENCLI_SOCIAL_HOME: fs.mkdtempSync(path.join(os.tmpdir(), 'opencli-social-home-')),
+  };
+}
+
+function configuredProfileEnv(options = {}) {
+  const env = profileEnv();
+  configureProfileAuth({
+    appId: options.appId || 'wx123',
+    appSecret: options.appSecret || 'secret123',
+    displayName: options.displayName || '测试公众号',
+    apiBase: options.apiBase || 'https://api.weixin.qq.com',
+    env,
+  });
+  return env;
+}

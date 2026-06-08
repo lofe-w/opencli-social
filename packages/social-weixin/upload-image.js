@@ -1,5 +1,5 @@
 import { cli, Strategy } from '@jackwener/opencli/registry';
-import { getAccessToken, requireExecute, uploadPermanentImage } from './lib/weixin.js';
+import { getAccessToken, profileAuditFields, requireExecute, uploadPermanentImage } from './lib/weixin.js';
 
 cli({
   site: 'social-weixin',
@@ -12,14 +12,21 @@ cli({
     { name: 'image', positional: true, required: true, help: 'Local image path' },
     { name: 'execute', type: 'bool', default: false, help: 'Actually upload the image' },
   ],
-  columns: ['status', 'media_id', 'url', 'path'],
+  columns: ['status', 'profile', 'account_name', 'account_id_masked', 'media_id', 'url', 'path'],
   func: async (kwargs) => {
     if (!requireExecute(kwargs)) {
-      return [{ status: 'dry_run', media_id: '', url: '', path: String(kwargs.image || '') }];
+      return [{ status: 'dry_run', ...profileAuditFields(), media_id: '', url: '', path: String(kwargs.image || '') }];
     }
     const token = await getAccessToken();
     const uploaded = await uploadPermanentImage(kwargs.image, token.accessToken);
-    return [{ status: 'uploaded', media_id: uploaded.mediaId, url: uploaded.url, path: uploaded.path }];
+    return [{
+      status: 'uploaded',
+      profile: token.profile,
+      account_name: token.account_name,
+      account_id_masked: token.account_id_masked,
+      media_id: uploaded.mediaId,
+      url: uploaded.url,
+      path: uploaded.path,
+    }];
   },
 });
-

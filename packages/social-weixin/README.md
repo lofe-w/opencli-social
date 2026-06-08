@@ -2,7 +2,11 @@
 
 用于微信公众号运营的 OpenCLI 插件。当前覆盖文章发布链路，后续扩展评论、已发布内容和数据查询能力。
 
-## 环境变量
+## OpenCLI profile 认证
+
+`social-weixin` 的账号只通过 OpenCLI profile 选择。每个 profile 拥有独立的公众号 `AppID`、`AppSecret`、access token cache 和审计输出；命令不读取旧式全局公众号凭据环境变量。
+
+当前 OpenCLI 版本的 root `--profile` 只会传递给 Browser Bridge 命令；`social-weixin` 是本地官方 API 命令，因此请使用 `OPENCLI_PROFILE=oa-a opencli ...` 或先运行 `opencli profile use oa-a` 来选择 profile。设计目标是未来 OpenCLI 将 root `--profile` 也传递给本地插件命令。
 
 先按微信官方文档获取公众号凭据并配置 API IP 白名单：
 
@@ -15,44 +19,55 @@
 使用 AppID/AppSecret 获取 access token 时，微信会校验 API IP 白名单。如果本地网络、办公出口或部署服务器 IP 变化，需要同步更新白名单。
 
 ```bash
-export SOCIAL_WEIXIN_APP_ID="wx..."
-export SOCIAL_WEIXIN_APP_SECRET="..."
+printf '%s' '你的 AppSecret' | OPENCLI_PROFILE=oa-a opencli social-weixin auth-config \
+  --app-id wx123 \
+  --display-name "公众号A" \
+  --app-secret-stdin \
+  --execute
+
+OPENCLI_PROFILE=oa-a opencli social-weixin doctor --check-token -f json
 ```
 
-也可以提供托管 token：
+配置会写入当前用户的 OpenCLI Social profile 目录：
 
-```bash
-export SOCIAL_WEIXIN_ACCESS_TOKEN="..."
-```
+- `~/.opencli-social/profiles/<profile>/social-weixin/config.json`
+- `~/.opencli-social/profiles/<profile>/social-weixin/app-secret`
+- `~/.opencli-social/profiles/<profile>/social-weixin/token.json`
+
+`app-secret` 文件使用本地 profile 级 secret 文件保存，命令输出只显示 `account_id_masked`，不会打印 AppSecret 或 access token。
 
 ## 命令
 
 ```bash
-opencli social-weixin doctor
-opencli social-weixin doctor --check-token
+OPENCLI_PROFILE=oa-a opencli social-weixin auth-config --app-id wx123 --display-name "公众号A" --app-secret-stdin --execute
+OPENCLI_PROFILE=oa-a opencli social-weixin auth-status -f json
+OPENCLI_PROFILE=oa-a opencli social-weixin profile-clear --execute
 
-opencli social-weixin auth
-opencli social-weixin auth --no-cache
-opencli social-weixin auth --force-refresh
-opencli social-weixin auth --legacy-token
+OPENCLI_PROFILE=oa-a opencli social-weixin doctor
+OPENCLI_PROFILE=oa-a opencli social-weixin doctor --check-token
 
-opencli social-weixin upload-image ./cover.jpg --execute
-opencli social-weixin upload-content-image ./inline.jpg --execute
+OPENCLI_PROFILE=oa-a opencli social-weixin auth
+OPENCLI_PROFILE=oa-a opencli social-weixin auth --no-cache
+OPENCLI_PROFILE=oa-a opencli social-weixin auth --force-refresh
+OPENCLI_PROFILE=oa-a opencli social-weixin auth --legacy-token
 
-opencli social-weixin draft-add "正文 HTML" \
+OPENCLI_PROFILE=oa-a opencli social-weixin upload-image ./cover.jpg --execute
+OPENCLI_PROFILE=oa-a opencli social-weixin upload-content-image ./inline.jpg --execute
+
+OPENCLI_PROFILE=oa-a opencli social-weixin draft-add "正文 HTML" \
   --title "标题" \
   --cover-image ./cover.jpg \
   --upload-inline-images \
   --digest "摘要" \
   --execute
 
-opencli social-weixin publish <draft_media_id> --execute
-opencli social-weixin publish <draft_media_id> --wait --execute
-opencli social-weixin publish-status <publish_id>
-opencli social-weixin publish-status <publish_id> --wait
-opencli social-weixin publish-status <publish_id> --wait --fail-on-failure
+OPENCLI_PROFILE=oa-a opencli social-weixin publish <draft_media_id> --execute
+OPENCLI_PROFILE=oa-a opencli social-weixin publish <draft_media_id> --wait --execute
+OPENCLI_PROFILE=oa-a opencli social-weixin publish-status <publish_id>
+OPENCLI_PROFILE=oa-a opencli social-weixin publish-status <publish_id> --wait
+OPENCLI_PROFILE=oa-a opencli social-weixin publish-status <publish_id> --wait --fail-on-failure
 
-opencli social-weixin publish-article "正文 HTML" \
+OPENCLI_PROFILE=oa-a opencli social-weixin publish-article "正文 HTML" \
   --title "标题" \
   --cover-image ./cover.jpg \
   --upload-inline-images \
@@ -60,8 +75,8 @@ opencli social-weixin publish-article "正文 HTML" \
   --wait \
   --execute
 
-opencli social-weixin request get /cgi-bin/get_api_domain
-opencli social-weixin request post /cgi-bin/freepublish/get \
+OPENCLI_PROFILE=oa-a opencli social-weixin request get /cgi-bin/get_api_domain
+OPENCLI_PROFILE=oa-a opencli social-weixin request post /cgi-bin/freepublish/get \
   --body '{"publish_id":"publish_id"}' \
   --execute
 ```
@@ -72,7 +87,7 @@ opencli social-weixin request post /cgi-bin/freepublish/get \
 
 `auth` 默认使用微信 stable access-token 端点。`--force-refresh` 会强制刷新 stable token，应谨慎使用；`--legacy-token` 会回退到较旧的 `/cgi-bin/token` 端点。
 
-`doctor` 是推荐的第一条诊断命令。未配置凭据时，它会返回 `missing_auth` 而不是失败，并只输出 `app_id_present`、`app_secret_present`、`access_token_present` 等布尔状态，不打印 token。需要实际验证 token 获取时，再加 `--check-token`。
+`doctor` 是推荐的第一条诊断命令。未选择或未配置 profile 时，它会返回 `missing_auth` 而不是失败，并只输出 `profile`、`account_id_masked`、`app_id_present`、`app_secret_present` 等状态，不打印 token。需要实际验证 token 获取时，再加 `--check-token`。
 
 `request` 是 raw escape hatch，会复用当前认证配置并自动附加 `access_token`。`GET` 和 `HEAD` 可直接执行；`POST`、`PUT`、`PATCH`、`DELETE` 必须加 `--execute`。它主要用于官方 API 新端点的只读探测或修复，不应替代高层发布命令。
 
@@ -85,7 +100,7 @@ opencli social-weixin doctor -f json
 opencli social-weixin publish-status <publish_id> -f json
 ```
 
-命令返回稳定的行对象数组。高层命令会把关键远端 ID 放在顶层字段，例如 `media_id`、`draft_media_id`、`publish_id`、`article_id` 和 `article_url`。`detail`、`checks`、`raw` 和 `response` 字段是 JSON 字符串，供需要完整上下文的 agent 二次解析。错误通过 OpenCLI 的命令错误机制返回，输出不得包含 access token、app secret 或完整认证查询串。
+命令返回稳定的行对象数组。高层命令会把 `profile`、`account_name`、`account_id_masked` 和关键远端 ID 放在顶层字段，例如 `media_id`、`draft_media_id`、`publish_id`、`article_id` 和 `article_url`。`detail`、`checks`、`raw` 和 `response` 字段是 JSON 字符串，供需要完整上下文的 agent 二次解析。错误通过 OpenCLI 的命令错误机制返回，输出不得包含 access token、app secret 或完整认证查询串。
 
 ## 校验
 
@@ -99,9 +114,12 @@ opencli social-weixin publish-status <publish_id> -f json
 ## 真实发布检查清单
 
 ```bash
-export SOCIAL_WEIXIN_APP_ID="wxf8bdb853b23f503a"
-export SOCIAL_WEIXIN_APP_SECRET="..."
-opencli social-weixin auth
+printf '%s' '你的 AppSecret' | OPENCLI_PROFILE=oa-a opencli social-weixin auth-config \
+  --app-id wxf8bdb853b23f503a \
+  --display-name "公众号A" \
+  --app-secret-stdin \
+  --execute
+OPENCLI_PROFILE=oa-a opencli social-weixin auth
 ```
 
 使用 AppID/AppSecret 时，当前机器或网络 IP 必须在微信公众号 API IP 白名单内。发布 API 还要求账号具备相应资格和所需 API 权限。
@@ -127,7 +145,7 @@ npm run publish:weixin-live-sample -- --dry-run
 该脚本等价于运行以下真实发布命令：
 
 ```bash
-opencli social-weixin publish-article \
+OPENCLI_PROFILE=oa-a opencli social-weixin publish-article \
   --content-file tmp/weixin-live/article.html \
   --title "OpenCLI 微信发布测试" \
   --cover-image tmp/weixin-live/cover.png \

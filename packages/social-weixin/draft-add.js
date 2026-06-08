@@ -5,6 +5,7 @@ import {
   compactArticleForOutput,
   getAccessToken,
   preflightArticleInput,
+  profileAuditFields,
   readContentInput,
   requireExecute,
   rewriteInlineImages,
@@ -38,14 +39,16 @@ cli({
   strategy: Strategy.LOCAL,
   browser: false,
   args: articleArgs,
-  columns: ['status', 'media_id', 'title', 'thumb_media_id', 'detail'],
+  columns: ['status', 'profile', 'account_name', 'account_id_masked', 'media_id', 'title', 'thumb_media_id', 'detail'],
   func: async (kwargs) => {
     const contentInput = readContentInput(kwargs);
     const isExecute = requireExecute(kwargs);
+    const audit = profileAuditFields();
     const preflight = await preflightArticleInput(kwargs, contentInput, { allowMissingThumb: !isExecute });
     if (!isExecute) {
       return [{
         status: 'dry_run',
+        ...audit,
         media_id: '',
         title: preflight.article.title,
         thumb_media_id: preflight.article.thumb_media_id,
@@ -68,6 +71,9 @@ cli({
     const draft = await addDraft(article, token.accessToken);
     return [{
       status: 'draft_created',
+      profile: token.profile,
+      account_name: token.account_name,
+      account_id_masked: token.account_id_masked,
       media_id: draft.mediaId,
       title: article.title,
       thumb_media_id: article.thumb_media_id,

@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { ArgumentError, CommandExecutionError } from '@jackwener/opencli/errors';
 
 const DEFAULT_API_BASE = 'https://api.weixin.qq.com';
-const DEFAULT_CACHE_DIR = path.join(os.homedir(), '.opencli-social');
+const DEFAULT_STATE_DIR = path.join(os.homedir(), '.opencli-social');
+const SITE = 'social-weixin';
 const TOKEN_SKEW_MS = 5 * 60 * 1000;
 const ONE_MIB = 1024 * 1024;
 const TEN_MIB = 10 * ONE_MIB;
@@ -24,35 +25,50 @@ const PUBLISH_STATUS = new Map([
 ]);
 
 export function readCredentials(env = process.env) {
+  const config = readProfileConfig(env);
+  if (!config) {
+    return {
+      appId: '',
+      appSecret: '',
+      accessToken: '',
+    };
+  }
   return {
-    appId: env.SOCIAL_WEIXIN_APP_ID || '',
-    appSecret: env.SOCIAL_WEIXIN_APP_SECRET || '',
-    accessToken: env.SOCIAL_WEIXIN_ACCESS_TOKEN || '',
+    appId: config.app_id || '',
+    appSecret: readProfileSecret(env),
+    accessToken: '',
   };
 }
 
 export function describeAuthConfig(env = process.env) {
-  const credentials = readCredentials(env);
+  const profile = currentProfile(env);
+  const config = readProfileConfig(env);
   const cache = readTokenCache(env);
-  const hasAppCredentials = Boolean(credentials.appId && credentials.appSecret);
+  const hasAppCredentials = Boolean(config?.app_id && profileSecretExists(env));
   const cacheFresh = Boolean(cache?.expiresAt && cache.expiresAt - Date.now() > TOKEN_SKEW_MS);
   let authSource = 'missing';
-  if (credentials.accessToken) authSource = 'env_access_token';
-  else if (hasAppCredentials) authSource = 'env_app_credentials';
+  if (!profile) authSource = 'missing_profile';
+  else if (!config) authSource = 'missing_profile_config';
+  else if (hasAppCredentials) authSource = 'profile_config';
   else if (cache?.accessToken && cacheFresh) authSource = 'cache';
   else if (cache?.accessToken) authSource = 'stale_cache';
 
   return {
+    profile,
+    profile_present: Boolean(profile),
+    config_present: Boolean(config),
+    account_name: config?.display_name || '',
+    account_id_masked: maskAppId(config?.app_id || ''),
     auth_source: authSource,
     api_base: apiBase(env),
-    cache_path: tokenCachePath(env),
+    cache_path: profile ? tokenCachePath(env) : '',
     cache_present: Boolean(cache?.accessToken),
     cache_expires_at: cache?.expiresAt ? new Date(cache.expiresAt).toISOString() : '',
     cache_fresh: cacheFresh,
-    app_id_present: Boolean(credentials.appId),
-    app_secret_present: Boolean(credentials.appSecret),
-    access_token_present: Boolean(credentials.accessToken),
-    ready: Boolean(credentials.accessToken || hasAppCredentials || (cache?.accessToken && cacheFresh)),
+    app_id_present: Boolean(config?.app_id),
+    app_secret_present: Boolean(config && profileSecretExists(env)),
+    access_token_present: false,
+    ready: Boolean(profile && config && (hasAppCredentials || (cache?.accessToken && cacheFresh))),
   };
 }
 
@@ -62,16 +78,22 @@ export async function doctor(options = {}) {
   const checkToken = parseBool(options.checkToken, false);
   const checks = [];
 
-  if (config.access_token_present) {
-    checks.push({ name: 'auth', status: 'ok', detail: 'access token is available from environment' });
+  if (!config.profile_present) {
+    checks.push({ name: 'profile', status: 'missing', detail: 'run opencli with --profile <name> or set a default OpenCLI profile' });
+  } else {
+    checks.push({ name: 'profile', status: 'ok', detail: config.profile });
+  }
+
+  if (!config.config_present) {
+    checks.push({ name: 'auth', status: 'missing', detail: 'run auth-config in this OpenCLI profile' });
   } else if (config.app_id_present && config.app_secret_present) {
-    checks.push({ name: 'auth', status: 'ok', detail: 'app id and app secret are configured' });
+    checks.push({ name: 'auth', status: 'ok', detail: 'profile app id and secret are configured' });
   } else if (config.cache_present && config.cache_fresh) {
     checks.push({ name: 'auth', status: 'ok', detail: 'fresh cached token is available' });
   } else if (config.cache_present) {
-    checks.push({ name: 'auth', status: 'missing', detail: 'cached token is expired; set app credentials or a fresh access token' });
+    checks.push({ name: 'auth', status: 'missing', detail: 'cached token is expired; configure this profile again with app credentials' });
   } else {
-    checks.push({ name: 'auth', status: 'missing', detail: 'set SOCIAL_WEIXIN_ACCESS_TOKEN or SOCIAL_WEIXIN_APP_ID/SOCIAL_WEIXIN_APP_SECRET' });
+    checks.push({ name: 'auth', status: 'missing', detail: 'profile is missing app id or app secret' });
   }
 
   checks.push({ name: 'api_base', status: 'ok', detail: config.api_base });
@@ -99,8 +121,12 @@ export async function doctor(options = {}) {
   const hasMissingAuth = checks.some((check) => check.name === 'auth' && check.status === 'missing');
   return {
     status: hasError ? 'error' : hasMissingAuth ? 'missing_auth' : 'ok',
+    profile: config.profile,
+    account_name: config.account_name,
+    account_id_masked: config.account_id_masked,
     auth_source: config.auth_source,
     api_base: config.api_base,
+    config_present: config.config_present,
     cache_path: config.cache_path,
     cache_present: config.cache_present,
     cache_fresh: config.cache_fresh,
@@ -110,6 +136,76 @@ export async function doctor(options = {}) {
     token_source: tokenSource,
     expires_at: expiresAt,
     checks,
+  };
+}
+
+export function currentProfile(env = process.env) {
+  const requested = String(env?.OPENCLI_PROFILE || '').trim();
+  if (requested) return profileAliasOrSelf(requested, env);
+  const config = readOpenCliProfileConfig(env);
+  const current = String(config.defaultContextId || '').trim();
+  return current ? profileAliasOrSelf(current, env) : '';
+}
+
+export function profileAuditFields(env = process.env) {
+  const config = requireProfileConfig(env);
+  return {
+    profile: currentProfile(env),
+    account_name: config.display_name || '',
+    account_id_masked: maskAppId(config.app_id || ''),
+  };
+}
+
+export function configureProfileAuth(options = {}) {
+  const env = options.env || process.env;
+  const profile = requireCurrentProfile(env);
+  const existing = readProfileConfig(env) || {};
+  const appId = String(options.appId || existing.app_id || '').trim();
+  if (!appId) throw new ArgumentError('--app-id is required');
+  const appSecret = String(options.appSecret || '');
+  if (!appSecret && !profileSecretExists(env)) {
+    throw new ArgumentError('--app-secret-stdin is required when this profile has no stored app secret');
+  }
+  const displayName = String(options.displayName || existing.display_name || '').trim();
+  const base = String(options.apiBase || existing.api_base || DEFAULT_API_BASE).replace(/\/+$/, '');
+  validateOptionalUrl(base, 'api_base');
+  if (!/^https?:\/\//i.test(base)) throw new ArgumentError('api_base must use http or https');
+
+  const dir = platformProfileDir(env);
+  fs.mkdirSync(dir, { recursive: true });
+  if (appSecret) writeProfileSecret(appSecret, env);
+  const config = {
+    schema_version: 1,
+    platform: SITE,
+    profile,
+    display_name: displayName,
+    app_id: appId,
+    app_id_masked: maskAppId(appId),
+    api_base: base,
+    secret_ref: 'profile-secret:app-secret',
+  };
+  writeJsonAtomic(profileConfigPath(env), config);
+  return {
+    status: 'configured',
+    profile,
+    account_name: displayName,
+    account_id_masked: maskAppId(appId),
+    api_base: base,
+    config_path: profileConfigPath(env),
+  };
+}
+
+export function clearProfileAuth(env = process.env) {
+  requireCurrentProfile(env);
+  const dir = platformProfileDir(env);
+  fs.rmSync(dir, { recursive: true, force: true });
+  return {
+    status: 'cleared',
+    profile: currentProfile(env),
+    account_name: '',
+    account_id_masked: '',
+    api_base: '',
+    config_path: profileConfigPath(env),
   };
 }
 
@@ -359,12 +455,6 @@ export async function getAccessToken(options = {}) {
     return { accessToken, source: 'env', expiresAt: null };
   }
 
-  if (!appId || !appSecret) {
-    throw new ArgumentError(
-      'Missing WeChat credentials. Set SOCIAL_WEIXIN_ACCESS_TOKEN or SOCIAL_WEIXIN_APP_ID/SOCIAL_WEIXIN_APP_SECRET.'
-    );
-  }
-
   if (!options.noCache) {
     const cached = readTokenCache(options.env);
     if (
@@ -376,8 +466,20 @@ export async function getAccessToken(options = {}) {
       cached.expiresAt &&
       cached.expiresAt - Date.now() > TOKEN_SKEW_MS
     ) {
-      return { accessToken: cached.accessToken, source: 'cache', expiresAt: cached.expiresAt };
+      return {
+        accessToken: cached.accessToken,
+        source: 'cache',
+        expiresAt: cached.expiresAt,
+        ...profileAuditFields(options.env || process.env),
+        apiBase: apiBase(options.env),
+      };
     }
+  }
+
+  if (!appId || !appSecret) {
+    throw new ArgumentError(
+      'Missing WeChat credentials for the current OpenCLI profile. Run auth-config with --app-id and --app-secret-stdin.'
+    );
   }
 
   const mode = tokenMode(options);
@@ -401,7 +503,13 @@ export async function getAccessToken(options = {}) {
   }
   const expiresAt = Date.now() + Number(data.expires_in || 7200) * 1000;
   writeTokenCache({ appId, mode, apiBase: apiBase(options.env), accessToken: data.access_token, expiresAt }, options.env);
-  return { accessToken: data.access_token, source: mode === 'legacy' ? 'api' : 'stable_api', expiresAt };
+  return {
+    accessToken: data.access_token,
+    source: mode === 'legacy' ? 'api' : 'stable_api',
+    expiresAt,
+    ...profileAuditFields(options.env || process.env),
+    apiBase: apiBase(options.env),
+  };
 }
 
 export async function uploadPermanentImage(filePath, accessToken) {
@@ -551,11 +659,143 @@ function tokenMode(options) {
 }
 
 export function apiBase(env = process.env) {
-  return String(env?.SOCIAL_WEIXIN_API_BASE || DEFAULT_API_BASE).replace(/\/+$/, '');
+  const config = readProfileConfig(env);
+  return String(config?.api_base || DEFAULT_API_BASE).replace(/\/+$/, '');
 }
 
 function tokenCachePath(env = process.env) {
-  return path.join(env?.SOCIAL_WEIXIN_CACHE_DIR || DEFAULT_CACHE_DIR, 'weixin-token.json');
+  return path.join(platformProfileDir(env), 'token.json');
+}
+
+function requireCurrentProfile(env = process.env) {
+  const profile = currentProfile(env);
+  if (!profile) {
+    throw new ArgumentError('OpenCLI profile is required. Run this command with --profile <name> or set a default profile.');
+  }
+  return profile;
+}
+
+function requireProfileConfig(env = process.env) {
+  const profile = requireCurrentProfile(env);
+  const config = readProfileConfig(env);
+  if (!config) {
+    throw new ArgumentError(`Profile "${profile}" is not configured for ${SITE}. Run auth-config first.`);
+  }
+  if (config.platform && config.platform !== SITE) {
+    throw new ArgumentError(`Profile "${profile}" config belongs to ${config.platform}, not ${SITE}.`);
+  }
+  return config;
+}
+
+function readProfileConfig(env = process.env) {
+  if (!currentProfile(env)) return null;
+  try {
+    const config = JSON.parse(fs.readFileSync(profileConfigPath(env), 'utf-8'));
+    if (config.schema_version && Number(config.schema_version) > 1) {
+      throw new ArgumentError(`Unsupported future profile config schema_version: ${config.schema_version}`);
+    }
+    return config;
+  } catch (err) {
+    if (err instanceof ArgumentError) throw err;
+    return null;
+  }
+}
+
+function readProfileSecret(env = process.env) {
+  requireProfileConfig(env);
+  try {
+    return fs.readFileSync(profileSecretPath(env), 'utf-8').trim();
+  } catch {
+    return '';
+  }
+}
+
+function writeProfileSecret(secret, env = process.env) {
+  const filePath = profileSecretPath(env);
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, `${String(secret).replace(/\s+$/, '')}\n`, { encoding: 'utf-8', mode: 0o600 });
+  try {
+    fs.chmodSync(filePath, 0o600);
+  } catch {
+    // Best effort on platforms that do not support chmod semantics.
+  }
+}
+
+function profileSecretExists(env = process.env) {
+  try {
+    const stat = fs.statSync(profileSecretPath(env));
+    return stat.isFile() && stat.size > 0;
+  } catch {
+    return false;
+  }
+}
+
+function profileConfigPath(env = process.env) {
+  return path.join(platformProfileDir(env), 'config.json');
+}
+
+function profileSecretPath(env = process.env) {
+  return path.join(platformProfileDir(env), 'app-secret');
+}
+
+function platformProfileDir(env = process.env) {
+  const profile = requireCurrentProfile(env);
+  return path.join(stateRoot(env), 'profiles', safePathSegment(profile), SITE);
+}
+
+function stateRoot(env = process.env) {
+  return env?.OPENCLI_SOCIAL_HOME || DEFAULT_STATE_DIR;
+}
+
+function readOpenCliProfileConfig(env = process.env) {
+  const configDir = env?.OPENCLI_CONFIG_DIR || path.join(os.homedir(), '.opencli');
+  try {
+    const parsed = JSON.parse(fs.readFileSync(path.join(configDir, 'browser-profiles.json'), 'utf-8'));
+    return {
+      defaultContextId: typeof parsed.defaultContextId === 'string' ? parsed.defaultContextId : '',
+      aliases: parsed.aliases && typeof parsed.aliases === 'object' ? parsed.aliases : {},
+    };
+  } catch {
+    return { defaultContextId: '', aliases: {} };
+  }
+}
+
+function profileAliasOrSelf(profile, env = process.env) {
+  const text = String(profile || '').trim();
+  if (!text) return '';
+  const config = readOpenCliProfileConfig(env);
+  if (config.aliases[text]) return text;
+  for (const [alias, contextId] of Object.entries(config.aliases)) {
+    if (contextId === text) return alias;
+  }
+  return text;
+}
+
+function safePathSegment(value) {
+  const safe = String(value || '').trim().replace(/[^A-Za-z0-9._-]/g, '_');
+  if (!safe || safe === '.' || safe === '..') {
+    throw new ArgumentError(`Invalid OpenCLI profile name: ${value}`);
+  }
+  return safe;
+}
+
+function maskAppId(appId) {
+  const text = String(appId || '');
+  if (!text) return '';
+  if (text.length <= 8) return `${text.slice(0, 2)}****`;
+  return `${text.slice(0, 4)}****${text.slice(-4)}`;
+}
+
+function writeJsonAtomic(filePath, value) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  fs.writeFileSync(tempPath, JSON.stringify(value, null, 2) + '\n', { encoding: 'utf-8', mode: 0o600 });
+  fs.renameSync(tempPath, filePath);
+  try {
+    fs.chmodSync(filePath, 0o600);
+  } catch {
+    // Best effort on platforms that do not support chmod semantics.
+  }
 }
 
 function withAccessToken(url, accessToken) {

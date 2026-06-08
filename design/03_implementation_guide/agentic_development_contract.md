@@ -11,9 +11,10 @@
 
 ## OpenCLI 与插件职责边界
 
-OpenCLI 负责浏览器和会话基础设施：
+OpenCLI 负责用户可见的 profile 身份上下文，以及浏览器和会话基础设施：
 
-- Chrome profile 选择和复用，例如 `--profile`、`OPENCLI_PROFILE` 和 `opencli profile use <alias>`。
+- profile 选择和复用，例如 `--profile`、`OPENCLI_PROFILE` 和 `opencli profile use <alias>`。浏览器平台将 profile 映射到 Chrome 会话；官方 API 平台将 profile 映射到平台凭据和 token cache。
+- Chrome profile、API profile 配置目录和当前 profile 的上下文传递。
 - 浏览器 session、adapter tab 生命周期、同源请求上下文和文件上传能力。
 - 页面 cookie、HttpOnly cookie、storage state、截图、trace artifact 和敏感字段 redaction。
 
@@ -21,6 +22,7 @@ OpenCLI 负责浏览器和会话基础设施：
 
 - 识别平台登录态和当前页面是否可继续自动执行。
 - 识别平台内发布主体，避免多账号或多主体场景下误发。
+- 在当前 OpenCLI profile 内解析平台凭据、发布主体和脱敏审计字段。
 - 校验本地输入，并在任何远端写入前失败。
 - 执行平台动作，例如上传、填表、保存草稿、提交发布、查询状态、回复评论。
 - 将平台提示、页面状态和 API 错误映射为稳定 JSON 输出或类型化错误。
@@ -109,14 +111,14 @@ job store 必须：
 
 ## 账号和主体安全
 
-OpenCLI profile 解决浏览器会话身份，插件解决平台内发布主体。写操作前必须确认当前主体安全：
+OpenCLI profile 解决用户可见的身份上下文；浏览器平台用它选择会话，API 平台用它选择凭据和 token cache。插件解决平台内发布主体。写操作前必须确认当前主体安全：
 
 - 当前 profile 与 job profile 一致，或用户显式覆盖。
-- 页面显示的发布主体与 `--account-name` / `--account-id` 匹配。
+- 页面显示的发布主体、或 API profile 配置的发布主体，与命令期望匹配。
 - 页面展示多个主体、主体不明确或读取失败时，进入 `needs_human/account_select_required` 或抛出 `account_mismatch`。
 - 输出实际识别到的账号名称或脱敏 ID，便于审计。
 
-不要用默认页面主体、最近使用主体或第一个列表项猜测发布目标。
+不要用默认页面主体、最近使用主体、第一个列表项或旧式全局凭据猜测发布目标。
 
 ## 未知结果和重试
 

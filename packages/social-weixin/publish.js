@@ -1,6 +1,7 @@
 import { cli, Strategy } from '@jackwener/opencli/registry';
 import {
   getAccessToken,
+  profileAuditFields,
   publishStatusRow,
   requireExecute,
   submitPublish,
@@ -21,13 +22,15 @@ cli({
     { name: 'interval-seconds', type: 'number', default: 5, help: 'Polling interval when --wait is set' },
     { name: 'execute', type: 'bool', default: false, help: 'Actually submit the draft' },
   ],
-  columns: ['status', 'media_id', 'publish_id', 'publish_status', 'article_id', 'article_url', 'fail_idx', 'msg_data_id', 'raw'],
+  columns: ['status', 'profile', 'account_name', 'account_id_masked', 'media_id', 'publish_id', 'publish_status', 'article_id', 'article_url', 'fail_idx', 'msg_data_id', 'raw'],
   func: async (kwargs) => {
     const mediaId = String(kwargs['media-id'] || '');
     const shouldWait = kwargs.wait === true;
+    const audit = profileAuditFields();
     if (!requireExecute(kwargs)) {
       return [{
         status: shouldWait ? 'dry_run_submit_and_wait' : 'dry_run_submit',
+        ...audit,
         media_id: mediaId,
         publish_id: '',
         publish_status: '',
@@ -46,10 +49,20 @@ cli({
         intervalSeconds: kwargs['interval-seconds'],
         failOnFailure: true,
       });
-      return [{ ...publishStatusRow(status, submitted.publishId), media_id: mediaId, msg_data_id: submitted.msgDataId }];
+      return [{
+        ...publishStatusRow(status, submitted.publishId),
+        profile: token.profile,
+        account_name: token.account_name,
+        account_id_masked: token.account_id_masked,
+        media_id: mediaId,
+        msg_data_id: submitted.msgDataId,
+      }];
     }
     return [{
       status: 'submitted',
+      profile: token.profile,
+      account_name: token.account_name,
+      account_id_masked: token.account_id_masked,
       media_id: mediaId,
       publish_id: submitted.publishId,
       publish_status: '',

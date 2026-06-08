@@ -20,7 +20,7 @@ cli({
     { name: 'interval-seconds', type: 'number', default: 5, help: 'Polling interval when --wait is set' },
     { name: 'fail-on-failure', type: 'bool', default: false, help: 'Exit non-zero if a terminal publish failure is reached' },
   ],
-  columns: ['status', 'publish_id', 'publish_status', 'article_id', 'article_url', 'fail_idx', 'raw'],
+  columns: ['status', 'profile', 'account_name', 'account_id_masked', 'publish_id', 'publish_status', 'article_id', 'article_url', 'fail_idx', 'raw'],
   func: async (kwargs) => {
     const publishId = String(kwargs['publish-id'] || '');
     const shouldWait = kwargs.wait === true;
@@ -32,6 +32,11 @@ cli({
         failOnFailure: kwargs['fail-on-failure'],
       })
       : await getPublishStatus(publishId, token.accessToken);
-    return [publishStatusRow(data, publishId)];
+    return [{
+      ...publishStatusRow(data, publishId),
+      profile: token.profile,
+      account_name: token.account_name,
+      account_id_masked: token.account_id_masked,
+    }];
   },
 });

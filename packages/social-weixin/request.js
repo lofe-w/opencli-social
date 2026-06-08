@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import { cli, Strategy } from '@jackwener/opencli/registry';
 import { ArgumentError } from '@jackwener/opencli/errors';
-import { parseBool, rawRequest, requireExecute } from './lib/weixin.js';
+import { parseBool, profileAuditFields, rawRequest, requireExecute } from './lib/weixin.js';
 
 cli({
   site: 'social-weixin',
@@ -18,14 +18,16 @@ cli({
     { name: 'no-auth', type: 'bool', default: false, help: 'Do not append configured access_token' },
     { name: 'execute', type: 'bool', default: false, help: 'Allow non-GET/HEAD raw requests' },
   ],
-  columns: ['status', 'method', 'path', 'response'],
+  columns: ['status', 'profile', 'account_name', 'account_id_masked', 'method', 'path', 'response'],
   func: async (kwargs) => {
     const method = String(kwargs.method || '').toUpperCase();
     const path = String(kwargs.path || '');
     const isReadOnly = ['GET', 'HEAD'].includes(method);
+    const audit = parseBool(kwargs['no-auth'], false) ? { profile: '', account_name: '', account_id_masked: '' } : profileAuditFields();
     if (!isReadOnly && !requireExecute(kwargs)) {
       return [{
         status: 'dry_run',
+        ...audit,
         method,
         path,
         response: JSON.stringify({
@@ -41,6 +43,7 @@ cli({
     });
     return [{
       status: result.status,
+      ...audit,
       method: result.method,
       path: result.path,
       response: JSON.stringify(result.response),
