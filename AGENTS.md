@@ -16,7 +16,7 @@ OpenCLI Social 是一组用于操作社交和内容平台的 OpenCLI 插件 mono
 | 插件宿主 | OpenCLI 插件系统 |
 | 包布局 | npm workspaces |
 | 命令 | 通过 `@jackwener/opencli/registry` 注册的 ESM JavaScript 文件 |
-| 认证 | 环境变量和微信公众号 access token |
+| 认证 | OpenCLI profile 级平台凭据和 access token cache |
 
 ## 文档地图
 

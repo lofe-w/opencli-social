@@ -6,6 +6,7 @@ import {
   compactArticleForOutput,
   getAccessToken,
   preflightArticleInput,
+  profileAuditFields,
   publishStatusRow,
   readContentInput,
   requireExecute,
@@ -44,7 +45,7 @@ cli({
     { name: 'interval-seconds', type: 'number', default: 5, help: 'Polling interval when --wait is set' },
     { name: 'execute', type: 'bool', default: false, help: 'Actually create draft and optionally publish' },
   ],
-  columns: ['status', 'draft_media_id', 'publish_id', 'publish_status', 'article_id', 'article_url', 'fail_idx', 'title', 'detail'],
+  columns: ['status', 'profile', 'account_name', 'account_id_masked', 'draft_media_id', 'publish_id', 'publish_status', 'article_id', 'article_url', 'fail_idx', 'title', 'detail'],
   func: async (kwargs) => {
     const contentInput = readContentInput(kwargs);
     const shouldPublish = kwargs.publish === true;
@@ -53,6 +54,7 @@ cli({
       throw new ArgumentError('--wait requires --publish.');
     }
     const isExecute = requireExecute(kwargs);
+    const audit = profileAuditFields();
     const preflight = await preflightArticleInput(kwargs, contentInput, { allowMissingThumb: !isExecute });
     if (!isExecute) {
       const thumbMediaId = String(kwargs['thumb-media-id'] || '');
@@ -60,6 +62,7 @@ cli({
         status: shouldPublish
           ? shouldWait ? 'dry_run_draft_publish_and_wait' : 'dry_run_draft_and_publish'
           : 'dry_run_draft',
+        ...audit,
         draft_media_id: '',
         publish_id: '',
         publish_status: '',
@@ -88,6 +91,9 @@ cli({
     if (!shouldPublish) {
       return [{
         status: 'draft_created',
+        profile: token.profile,
+        account_name: token.account_name,
+        account_id_masked: token.account_id_masked,
         draft_media_id: draft.mediaId,
         publish_id: '',
         publish_status: '',
@@ -109,6 +115,9 @@ cli({
       const row = publishStatusRow(status, submitted.publishId);
       return [{
         ...row,
+        profile: token.profile,
+        account_name: token.account_name,
+        account_id_masked: token.account_id_masked,
         draft_media_id: draft.mediaId,
         title: article.title,
         detail: JSON.stringify({ ...compactArticleForOutput(article), inline_images: rewritten.images, msg_data_id: submitted.msgDataId }),
@@ -116,6 +125,9 @@ cli({
     }
     return [{
       status: 'submitted',
+      profile: token.profile,
+      account_name: token.account_name,
+      account_id_masked: token.account_id_masked,
       draft_media_id: draft.mediaId,
       publish_id: submitted.publishId,
       publish_status: '',

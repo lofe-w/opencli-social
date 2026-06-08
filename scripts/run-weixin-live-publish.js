@@ -11,10 +11,10 @@ if (dryRun) {
   process.exit(0);
 }
 
-if (!hasCredentials(process.env)) {
+if (!process.env.OPENCLI_PROFILE) {
   console.error([
-    'Missing WeChat credentials for live publish.',
-    'Set SOCIAL_WEIXIN_ACCESS_TOKEN, or set SOCIAL_WEIXIN_APP_ID and SOCIAL_WEIXIN_APP_SECRET.',
+    'Missing OpenCLI profile for live publish.',
+    'Run with opencli --profile <name> or set an OpenCLI default profile before publishing.',
   ].join('\n'));
   process.exit(2);
 }
@@ -38,13 +38,6 @@ function publishArgs(options) {
   ];
   if (options.execute) command.push('--execute');
   return command;
-}
-
-function hasCredentials(env) {
-  if (env.SOCIAL_WEIXIN_ACCESS_TOKEN) return true;
-  const appId = env.SOCIAL_WEIXIN_APP_ID;
-  const secret = env.SOCIAL_WEIXIN_APP_SECRET;
-  return Boolean(appId && secret);
 }
 
 function run(command, argsToRun) {

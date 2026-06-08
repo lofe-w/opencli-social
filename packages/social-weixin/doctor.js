@@ -16,8 +16,12 @@ cli({
   ],
   columns: [
     'status',
+    'profile',
+    'account_name',
+    'account_id_masked',
     'auth_source',
     'api_base',
+    'config_present',
     'cache_present',
     'cache_fresh',
     'app_id_present',

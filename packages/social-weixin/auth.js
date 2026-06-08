@@ -13,7 +13,7 @@ cli({
     { name: 'force-refresh', type: 'bool', default: false, help: 'Force refresh stable access token; use sparingly' },
     { name: 'legacy-token', type: 'bool', default: false, help: 'Use legacy /cgi-bin/token instead of stable_token' },
   ],
-  columns: ['status', 'source', 'expires_at'],
+  columns: ['status', 'profile', 'account_name', 'account_id_masked', 'source', 'expires_at'],
   func: async (kwargs) => {
     const token = await getAccessToken({
       noCache: kwargs['no-cache'] === true,
@@ -22,6 +22,9 @@ cli({
     });
     return [{
       status: 'ok',
+      profile: token.profile,
+      account_name: token.account_name,
+      account_id_masked: token.account_id_masked,
       source: token.source,
       expires_at: token.expiresAt ? new Date(token.expiresAt).toISOString() : '',
     }];

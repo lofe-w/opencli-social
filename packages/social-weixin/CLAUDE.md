@@ -7,6 +7,9 @@
 | 路径 | 用途 |
 |---|---|
 | `doctor.js` | 诊断认证、缓存和 API base 配置 |
+| `auth-config.js` | 为当前 OpenCLI profile 配置公众号 AppID/AppSecret |
+| `auth-status.js` | 读取当前 OpenCLI profile 的公众号认证状态 |
+| `profile-clear.js` | 清理当前 OpenCLI profile 的公众号配置和 token cache |
 | `auth.js` | 校验 token 获取 |
 | `upload-image.js` | 上传永久封面图片素材 |
 | `upload-content-image.js` | 上传文章内联图片 |
@@ -25,6 +28,8 @@
 
 - 命令注册文件必须保留在当前目录根部。
 - 不要把命令文件移到 `src/` 下；OpenCLI 插件发现机制不会加载它们。
+- 公众号账号只通过 OpenCLI profile 管理；不要新增 `--account`，也不要重新引入旧式全局公众号凭据环境变量。
+- 写命令和 dry-run 输出都应包含 `profile`、`account_name` 和 `account_id_masked`，便于发布审计。
 - 远程写入，包括发布、回复、删除、修改和提交类操作，必须传入 `--execute`。
 - raw 非 GET/HEAD 请求必须传入 `--execute`。
 - API 错误应通过 OpenCLI 错误类保持类型化。

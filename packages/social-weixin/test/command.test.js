@@ -71,15 +71,8 @@ test('OpenCLI commands can create and publish a draft against a mock WeChat API'
   t.after(() => server.close());
 
   const apiBase = `http://127.0.0.1:${server.address().port}`;
-  const cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-cache-'));
   const appId = `wx-test-${process.pid}-${Date.now()}`;
-  const commonEnv = {
-    ...process.env,
-    SOCIAL_WEIXIN_API_BASE: apiBase,
-    SOCIAL_WEIXIN_CACHE_DIR: cacheDir,
-    SOCIAL_WEIXIN_APP_ID: appId,
-    SOCIAL_WEIXIN_APP_SECRET: 'secret-test',
-  };
+  const commonEnv = createConfiguredEnv({ apiBase, appId });
 
   const draft = await runOpencli([
     'social-weixin',
@@ -225,13 +218,10 @@ test('publish-article uploads cover and inline images before publishing', async 
   t.after(() => server.close());
 
   const apiBase = `http://127.0.0.1:${server.address().port}`;
-  const commonEnv = {
-    ...process.env,
-    SOCIAL_WEIXIN_API_BASE: apiBase,
-    SOCIAL_WEIXIN_CACHE_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-cache-')),
-    SOCIAL_WEIXIN_APP_ID: `wx-test-${process.pid}-${Date.now()}-composite`,
-    SOCIAL_WEIXIN_APP_SECRET: 'secret-test',
-  };
+  const commonEnv = createConfiguredEnv({
+    apiBase,
+    appId: `wx-test-${process.pid}-${Date.now()}-composite`,
+  });
 
   const published = await runOpencli([
     'social-weixin',
@@ -327,13 +317,10 @@ test('standalone upload commands call the expected WeChat media endpoints', asyn
   await listen(server);
   t.after(() => server.close());
 
-  const commonEnv = {
-    ...process.env,
-    SOCIAL_WEIXIN_API_BASE: `http://127.0.0.1:${server.address().port}`,
-    SOCIAL_WEIXIN_CACHE_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-cache-')),
-    SOCIAL_WEIXIN_APP_ID: `wx-test-${process.pid}-${Date.now()}-upload`,
-    SOCIAL_WEIXIN_APP_SECRET: 'secret-test',
-  };
+  const commonEnv = createConfiguredEnv({
+    apiBase: `http://127.0.0.1:${server.address().port}`,
+    appId: `wx-test-${process.pid}-${Date.now()}-upload`,
+  });
 
   const cover = await runOpencli([
     'social-weixin',
@@ -378,12 +365,11 @@ test('doctor command reports missing auth as structured output', async (t) => {
     '-f',
     'json',
   ], {
-    ...withoutWeixinCredentials(process.env),
-    SOCIAL_WEIXIN_CACHE_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-cache-')),
+    ...withoutWeixinProfile(process.env),
   });
 
   assert.equal(rows[0].status, 'missing_auth');
-  assert.equal(rows[0].auth_source, 'missing');
+  assert.equal(rows[0].auth_source, 'missing_profile');
   assert.equal(rows[0].access_token_present, false);
 });
 
@@ -398,6 +384,10 @@ test('request command supports read-only raw GET and execute-gated POST', async 
     const body = await readBody(req);
     const url = new URL(req.url, 'http://127.0.0.1');
     requests.push({ method: req.method, pathname: url.pathname, accessToken: url.searchParams.get('access_token'), body });
+    if (url.pathname === '/cgi-bin/stable_token') {
+      writeJson(res, { access_token: 'mock-token', expires_in: 7200 });
+      return;
+    }
     writeJson(res, {
       method: req.method,
       path: url.pathname,
@@ -409,11 +399,10 @@ test('request command supports read-only raw GET and execute-gated POST', async 
   await listen(server);
   t.after(() => server.close());
 
-  const commonEnv = {
-    ...process.env,
-    SOCIAL_WEIXIN_API_BASE: `http://127.0.0.1:${server.address().port}`,
-    SOCIAL_WEIXIN_ACCESS_TOKEN: 'raw-secret-token',
-  };
+  const commonEnv = createConfiguredEnv({
+    apiBase: `http://127.0.0.1:${server.address().port}`,
+    appId: `wx-test-${process.pid}-${Date.now()}-request`,
+  });
 
   const getRows = await runOpencli([
     'social-weixin',
@@ -452,8 +441,9 @@ test('request command supports read-only raw GET and execute-gated POST', async 
   ], commonEnv);
   assert.equal(postRows[0].status, 'ok');
   assert.deepEqual(JSON.parse(postRows[0].response).body, { hello: 'world' });
-  assert.deepEqual(requests.map((request) => request.method), ['GET', 'POST']);
-  assert.deepEqual(requests.map((request) => request.accessToken), ['raw-secret-token', 'raw-secret-token']);
+  const apiRequests = requests.filter((request) => request.pathname !== '/cgi-bin/stable_token');
+  assert.deepEqual(apiRequests.map((request) => request.method), ['GET', 'POST']);
+  assert.deepEqual(apiRequests.map((request) => request.accessToken), ['mock-token', 'mock-token']);
 });
 
 test('live publish script dry-runs the generated sample without remote writes', async (t) => {
@@ -465,7 +455,7 @@ test('live publish script dry-runs the generated sample without remote writes', 
   const result = await spawnCommand('npm', ['run', 'publish:weixin-live-sample', '--', '--dry-run'], {
     cwd: REPO_ROOT,
     env: {
-      ...process.env,
+      ...createConfiguredEnv(),
       SOCIAL_WEIXIN_LIVE_TITLE: 'OpenCLI 脚本 dry-run 测试',
     },
   });
@@ -479,20 +469,18 @@ test('live publish script dry-runs the generated sample without remote writes', 
 test('live publish script fails early when credentials are missing', async () => {
   const result = await spawnCommand('node', ['scripts/run-weixin-live-publish.js'], {
     cwd: REPO_ROOT,
-    env: withoutWeixinCredentials(process.env),
+    env: withoutWeixinProfile(process.env),
   });
 
   assert.equal(result.code, 2, result.stderr || result.stdout);
-  assert.match(result.stderr, /Missing WeChat credentials for live publish/);
-  assert.match(result.stderr, /SOCIAL_WEIXIN_ACCESS_TOKEN/);
+  assert.match(result.stderr, /Missing OpenCLI profile for live publish/);
 });
 
 function opencliSocialWeixinAvailable() {
   const result = spawnSync('opencli', ['social-weixin', 'doctor', '-f', 'json'], {
     cwd: PACKAGE_ROOT,
     env: {
-      ...withoutWeixinCredentials(process.env),
-      SOCIAL_WEIXIN_CACHE_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-cache-')),
+      ...withoutWeixinProfile(process.env),
     },
     encoding: 'utf8',
   });
@@ -549,15 +537,45 @@ function spawnCommand(command, args, options) {
   });
 }
 
-function withoutWeixinCredentials(env) {
+function createConfiguredEnv(options = {}) {
+  const profile = options.profile || `oa-test-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'opencli-social-home-'));
+  const env = {
+    ...withoutWeixinProfile(process.env),
+    OPENCLI_PROFILE: profile,
+    OPENCLI_SOCIAL_HOME: root,
+  };
+  const dir = path.join(root, 'profiles', profile, 'social-weixin');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify({
+    schema_version: 1,
+    platform: 'social-weixin',
+    profile,
+    display_name: options.displayName || '测试公众号',
+    app_id: options.appId || `wx-test-${process.pid}-${Date.now()}`,
+    app_id_masked: 'wx-t****test',
+    api_base: options.apiBase || 'https://api.weixin.qq.com',
+    secret_ref: 'profile-secret:app-secret',
+  }, null, 2));
+  fs.writeFileSync(path.join(dir, 'app-secret'), `${options.secret || 'secret-test'}\n`, { mode: 0o600 });
+  return env;
+}
+
+function withoutWeixinProfile(env) {
   const output = { ...env };
   for (const key of [
     'SOCIAL_WEIXIN_ACCESS_TOKEN',
     'SOCIAL_WEIXIN_APP_ID',
     'SOCIAL_WEIXIN_APP_SECRET',
+    'SOCIAL_WEIXIN_API_BASE',
+    'SOCIAL_WEIXIN_CACHE_DIR',
+    'OPENCLI_PROFILE',
+    'OPENCLI_SOCIAL_HOME',
+    'OPENCLI_CONFIG_DIR',
   ]) {
     delete output[key];
   }
+  output.OPENCLI_CONFIG_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'opencli-config-'));
   return output;
 }
 
