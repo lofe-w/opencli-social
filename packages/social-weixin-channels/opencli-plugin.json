@@ -1,0 +1,6 @@
+{
+  "name": "social-weixin-channels",
+  "version": "0.1.0",
+  "description": "Operate WeChat Channels creator publishing through OpenCLI browser sessions",
+  "opencli": ">=1.8.0"
+}

@@ -29,6 +29,7 @@ OpenCLI Social 是一组用于操作社交和内容平台的 OpenCLI 插件 mono
 | `design/03_implementation_guide/agentic_development_contract.md` | 项目级 Agentic 开发契约、HITL、会话边界和写入保护 | 开发任何平台能力或远端写操作前 |
 | `design/03_implementation_guide/opencli_plugin_guide.md` | OpenCLI 插件实现约定 | 添加命令或包前 |
 | `packages/social-weixin/CLAUDE.md` | 微信插件本地指南 | 编辑该包前 |
+| `packages/social-weixin-channels/CLAUDE.md` | 微信视频号插件本地指南 | 编辑该包前 |
 | `issues/` | 本地 issue 和实现说明 | 规划工作时 |
 | `memory/` | 持久化项目记忆 | 恢复上下文时 |
 

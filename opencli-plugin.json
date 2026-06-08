@@ -6,6 +6,10 @@
     "social-weixin": {
       "path": "packages/social-weixin",
       "description": "Operate WeChat Official Account publishing and social workflows"
+    },
+    "social-weixin-channels": {
+      "path": "packages/social-weixin-channels",
+      "description": "Operate WeChat Channels creator publishing through OpenCLI browser sessions"
     }
   }
 }
