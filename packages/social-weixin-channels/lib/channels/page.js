@@ -145,6 +145,47 @@ export async function capturePageState(page, target = 'current') {
   return { ...(state || {}), screenshot_path: screenshotPath };
 }
 
+export async function inspectPublishFormState(page) {
+  const state = await evalPage(page, `
+    (() => {
+      ${DEEP_QUERY_FN}
+      var text = deepVisibleText(500);
+      var fields = deepQueryAll('input, textarea, [contenteditable]').filter(isVisible).map(function(el) {
+        return {
+          tag: el.tagName || '',
+          placeholder: el.getAttribute('placeholder') || el.getAttribute('data-placeholder') || '',
+          text: String(el.value || el.innerText || el.textContent || '').replace(/\\s+/g, ' ').trim(),
+        };
+      });
+      function findField(pattern) {
+        for (var i = 0; i < fields.length; i++) {
+          if (pattern.test(fields[i].placeholder) || pattern.test(fields[i].text)) return fields[i].text || '';
+        }
+        return '';
+      }
+      var buttons = deepQueryAll('button, [role="button"], a.weui-desktop-btn, .weui-desktop-btn').filter(isVisible).map(function(btn) {
+        return {
+          text: (btn.innerText || btn.textContent || '').replace(/\\s+/g, ' ').trim(),
+          disabled: !!(btn.disabled || btn.getAttribute('disabled') !== null || btn.getAttribute('aria-disabled') === 'true' ||
+            btn.classList.contains('disabled') || btn.classList.contains('weui-desktop-btn_disabled')),
+        };
+      });
+      var hasVideo = Boolean(deepQuery('video') || deepQuery('[class*="preview-video"]') ||
+        deepQuery('[class*="video-thumb"]') || deepQuery('[class*="video"][class*="preview"]'));
+      return {
+        url: location.href,
+        create_like: /\\/platform\\/post\\/create/.test(location.href) || /添加描述|短标题|保存草稿|发表/.test(text),
+        has_video: hasVideo,
+        description: findField(/描述|添加描述/),
+        short_title: findField(/短标题|标题/),
+        text_preview: text.slice(0, 800),
+        buttons,
+      };
+    })()
+  `);
+  return state || {};
+}
+
 export async function inspectPage(page, accountName = '') {
   const info = await evalPage(page, `
     (() => {
@@ -321,21 +362,18 @@ async function findAndClickSubmitOnce(page, labels) {
   `);
 }
 
-export async function waitForSubmitResult(page, isDraft, timeoutSeconds = 120, options = {}) {
+export async function waitForSubmitResult(page, isDraft, timeoutSeconds = 120) {
   const deadline = Date.now() + timeoutSeconds * 1000;
   let last = null;
-  let acknowledgedPostSubmitNotice = false;
-  let retriedPrimarySubmit = !options.allowInitialPrimaryRetry;
   while (Date.now() < deadline) {
     await page.wait({ time: 2 });
     last = await evalPage(page, `
-      ((shouldRetryPrimarySubmit) => {
+      (() => {
         ${DEEP_QUERY_FN}
         var text = deepVisibleText();
         var url = location.href;
         var buttons = deepQueryAll('button, [role="button"], a.weui-desktop-btn, .weui-desktop-btn');
         var clickedContinuation = false;
-        var clickedRetrySubmit = false;
         var modalText = '';
         for (var i = 0; i < buttons.length; i++) {
           var btn = buttons[i];
@@ -363,41 +401,18 @@ export async function waitForSubmitResult(page, isDraft, timeoutSeconds = 120, o
             break;
           }
         }
-        if (!clickedContinuation && shouldRetryPrimarySubmit && /\\/platform\\/post\\/create/.test(url)) {
-          for (var r = 0; r < buttons.length; r++) {
-            var retryBtn = buttons[r];
-            if (!isVisible(retryBtn)) continue;
-            var retryLabel = (retryBtn.innerText || retryBtn.textContent || '').replace(/\\s+/g, ' ').trim();
-            var retryDisabled = retryBtn.disabled || retryBtn.getAttribute('disabled') !== null ||
-              retryBtn.classList.contains('weui-desktop-btn_disabled') ||
-              retryBtn.classList.contains('disabled') ||
-              retryBtn.getAttribute('aria-disabled') === 'true';
-            if (!retryDisabled && (${isDraft ? "retryLabel.indexOf('草稿') >= 0" : "retryLabel === '发表' || retryLabel === '发布'"})) {
-              clickLikeUser(retryBtn);
-              clickedRetrySubmit = true;
-              break;
-            }
-          }
-        }
         return {
           url,
           text: text.slice(0, 500),
           clicked_continuation: clickedContinuation,
-          clicked_retry_submit: clickedRetrySubmit,
           modal_text: modalText,
           success: ${isDraft ? '/草稿已保存|暂存成功|保存成功/' : '/已发表|发布成功|发表成功|审核中|发表成功，进入审核|已提交审核/'}.test(text) || url.indexOf('/platform/post/list') >= 0,
           failed: /失败|错误|违规|不符合|请重试/.test(text),
         };
-      })(${JSON.stringify((acknowledgedPostSubmitNotice || options.allowInitialPrimaryRetry) && !retriedPrimarySubmit)})
+      })()
     `);
     if (last?.clicked_continuation) {
-      acknowledgedPostSubmitNotice = true;
       process.stderr.write(`[social-weixin-channels] continued post-submit confirmation: ${last.modal_text || ''}\n`);
-      continue;
-    }
-    if (last?.clicked_retry_submit) {
-      retriedPrimarySubmit = true;
-      process.stderr.write('[social-weixin-channels] retried primary submit after post-submit notice\n');
       continue;
     }
     if (last?.success) return last;

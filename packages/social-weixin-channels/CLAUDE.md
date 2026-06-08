@@ -25,8 +25,10 @@
 ## 规则
 
 - 不要保存、导出或复制 cookie/storage state；OpenCLI profile 负责浏览器会话。
-- 插件只保存可恢复 job metadata，不保存 token、完整 header、二维码原始 URL 或未脱敏私密响应。
+- 插件只保存可恢复 job metadata，不保存 token、完整 header、二维码原始 URL、完整文案或未脱敏私密响应；文案只保存 hash 与 preview。
 - 远端写操作必须声明 `access: 'write'` 并要求 `--execute`。
 - 发布流程必须保留 `job_id`、`resume_command` 和稳定 JSON 字段。
 - 遇到扫码、手机确认、账号选择、验证码、自动上传失败/超时、封面裁剪或最终发表前确认时，返回 `status=needs_human`。
-- `unknown_result` 后不要盲目重试发表；先用 `posts-list`、`page-state` 或人工检查反查状态。只有明确仍停留在同一个发布表单且反查为空时，才允许一次受控恢复。
+- `jobs-resume` 在提交前必须确认当前页面、账号、视频和表单内容与 job 对齐；无法确认时返回 `needs_human`。
+- `unknown_result` 后不要重试发表；先用 `posts-list`、`page-state` 或人工检查反查状态，确认未发布后重新创建发布任务。
+- 如果原始文案来自 `--description`，恢复时需要重新传入 `jobs-resume --description ...` 或 `--description-file ...`。

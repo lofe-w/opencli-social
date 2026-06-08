@@ -24,7 +24,6 @@ export function createJob(input, options = {}) {
       description_sha256: input.description_source && input.description_source !== 'argument'
         ? fileSummary(input.description_source).sha256
         : '',
-      caption: input.caption,
       caption_sha256: crypto.createHash('sha256').update(input.caption).digest('hex'),
       caption_preview: input.caption.slice(0, 80),
       short_title: input.short_title,
@@ -47,7 +46,7 @@ export function createJob(input, options = {}) {
     remote: {
       post_id: '',
       post_url: '',
-      observable_key: `${input.short_title || input.caption.slice(0, 24)}+${now}`,
+      observable_key: `${crypto.createHash('sha256').update(input.caption).digest('hex').slice(0, 12)}+${now}`,
     },
     next_command: resumeCommand(jobId, options.profile),
     last_action_id: '',
