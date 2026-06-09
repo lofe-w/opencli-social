@@ -1,11 +1,11 @@
 import { cli, Strategy } from '@jackwener/opencli/registry';
-import { getAccessToken } from './lib/weixin.js';
+import { getAccessToken } from './lib/wechat-article.js';
 
 cli({
-  site: 'social-weixin',
+  site: 'social-wechat-article',
   name: 'auth',
   access: 'read',
-  description: 'Validate WeChat Official Account token acquisition',
+  description: 'Validate WeChat Article API token acquisition',
   strategy: Strategy.LOCAL,
   browser: false,
   args: [

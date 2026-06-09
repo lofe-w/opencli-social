@@ -1,11 +1,11 @@
 import { cli, Strategy } from '@jackwener/opencli/registry';
-import { clearProfileAuth, requireExecute } from './lib/weixin.js';
+import { clearProfileAuth, requireExecute } from './lib/wechat-article.js';
 
 cli({
-  site: 'social-weixin',
+  site: 'social-wechat-article',
   name: 'profile-clear',
   access: 'write',
-  description: 'Remove social-weixin configuration from the current OpenCLI profile',
+  description: 'Remove social-wechat-article configuration from the current OpenCLI profile',
   strategy: Strategy.LOCAL,
   browser: false,
   args: [

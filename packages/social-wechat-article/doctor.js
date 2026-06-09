@@ -1,11 +1,11 @@
 import { cli, Strategy } from '@jackwener/opencli/registry';
-import { doctor } from './lib/weixin.js';
+import { doctor } from './lib/wechat-article.js';
 
 cli({
-  site: 'social-weixin',
+  site: 'social-wechat-article',
   name: 'doctor',
   access: 'read',
-  description: 'Inspect WeChat social plugin auth and local configuration without printing secrets',
+  description: 'Inspect WeChat Article auth and local configuration without printing secrets',
   strategy: Strategy.LOCAL,
   browser: false,
   args: [

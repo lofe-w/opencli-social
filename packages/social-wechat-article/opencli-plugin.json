@@ -1,0 +1,6 @@
+{
+  "name": "social-wechat-article",
+  "version": "0.1.0",
+  "opencli": ">=1.8.0",
+  "description": "Operate WeChat Article publishing and social workflows"
+}

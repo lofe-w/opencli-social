@@ -1,17 +1,17 @@
 import * as fs from 'node:fs';
 import { cli, Strategy } from '@jackwener/opencli/registry';
 import { ArgumentError } from '@jackwener/opencli/errors';
-import { configureProfileAuth, requireExecute } from './lib/weixin.js';
+import { configureProfileAuth, requireExecute } from './lib/wechat-article.js';
 
 cli({
-  site: 'social-weixin',
+  site: 'social-wechat-article',
   name: 'auth-config',
   access: 'write',
-  description: 'Configure WeChat Official Account credentials for the current OpenCLI profile',
+  description: 'Configure WeChat Article API credentials for the current OpenCLI profile',
   strategy: Strategy.LOCAL,
   browser: false,
   args: [
-    { name: 'app-id', required: true, help: 'WeChat Official Account AppID for this OpenCLI profile' },
+    { name: 'app-id', required: true, help: 'WeChat Article AppID for this OpenCLI profile' },
     { name: 'display-name', required: false, help: 'Human-readable account name for audit output' },
     { name: 'api-base', required: false, help: 'WeChat API base URL; defaults to https://api.weixin.qq.com' },
     { name: 'app-secret-stdin', type: 'bool', default: false, help: 'Read AppSecret from stdin' },

@@ -19,7 +19,7 @@ import {
   readContentInput,
   rewriteInlineImages,
   waitForPublishCompletion,
-} from '../lib/weixin.js';
+} from '../lib/wechat-article.js';
 
 test('parseBool accepts common truthy and falsey values', () => {
   assert.equal(parseBool(true), true);
@@ -121,11 +121,11 @@ test('doctor returns missing_auth instead of throwing when profile is absent', a
 
 test('doctor treats expired profile cache without a secret as missing auth', async () => {
   const env = profileEnv();
-  const dir = path.join(env.OPENCLI_SOCIAL_HOME, 'profiles', env.OPENCLI_PROFILE, 'social-weixin');
+  const dir = path.join(env.OPENCLI_SOCIAL_HOME, 'profiles', env.OPENCLI_PROFILE, 'social-wechat-article');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify({
     schema_version: 1,
-    platform: 'social-weixin',
+    platform: 'social-wechat-article',
     profile: env.OPENCLI_PROFILE,
     display_name: '测试公众号',
     app_id: 'wx123',
@@ -151,11 +151,11 @@ test('doctor treats expired profile cache without a secret as missing auth', asy
 
 test('fresh profile token cache works even when app secret is unavailable', async () => {
   const env = profileEnv();
-  const dir = path.join(env.OPENCLI_SOCIAL_HOME, 'profiles', env.OPENCLI_PROFILE, 'social-weixin');
+  const dir = path.join(env.OPENCLI_SOCIAL_HOME, 'profiles', env.OPENCLI_PROFILE, 'social-wechat-article');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify({
     schema_version: 1,
-    platform: 'social-weixin',
+    platform: 'social-wechat-article',
     profile: env.OPENCLI_PROFILE,
     display_name: '测试公众号',
     app_id: 'wx123',
@@ -236,7 +236,7 @@ test('readContentInput rejects positional content and content-file together', ()
 });
 
 test('readContentInput reads content-file and records its base directory', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-wechat-article-'));
   const filePath = path.join(dir, 'article.html');
   fs.writeFileSync(filePath, '<p>from file</p>');
 
@@ -342,7 +342,7 @@ test('buildArticle accepts WeChat inline image URLs', () => {
 });
 
 test('rewriteInlineImages dry-run validates local images and rewrites to WeChat placeholders', async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-wechat-article-'));
   const imagePath = path.join(dir, 'inline.jpg');
   fs.writeFileSync(imagePath, Buffer.from([0xff, 0xd8, 0xff, 0xd9]));
 
@@ -358,7 +358,7 @@ test('rewriteInlineImages dry-run validates local images and rewrites to WeChat 
 });
 
 test('rewriteInlineImages uploads local images with the provided upload function', async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-wechat-article-'));
   const imagePath = path.join(dir, 'inline.png');
   fs.writeFileSync(imagePath, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
 

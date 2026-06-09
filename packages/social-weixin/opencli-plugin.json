@@ -1,6 +1,0 @@
-{
-  "name": "social-weixin",
-  "version": "0.1.0",
-  "opencli": ">=1.8.0",
-  "description": "Operate WeChat Official Account publishing and social workflows"
-}

@@ -1,11 +1,11 @@
 import { cli, Strategy } from '@jackwener/opencli/registry';
-import { getAccessToken, profileAuditFields, requireExecute, uploadPermanentImage } from './lib/weixin.js';
+import { getAccessToken, profileAuditFields, requireExecute, uploadPermanentImage } from './lib/wechat-article.js';
 
 cli({
-  site: 'social-weixin',
+  site: 'social-wechat-article',
   name: 'upload-image',
   access: 'write',
-  description: 'Upload permanent image material for WeChat Official Account article covers',
+  description: 'Upload permanent image material for WeChat Article covers',
   strategy: Strategy.LOCAL,
   browser: false,
   args: [

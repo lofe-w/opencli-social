@@ -6,13 +6,13 @@ import {
   requireExecute,
   submitPublish,
   waitForPublishCompletion,
-} from './lib/weixin.js';
+} from './lib/wechat-article.js';
 
 cli({
-  site: 'social-weixin',
+  site: 'social-wechat-article',
   name: 'publish',
   access: 'write',
-  description: 'Submit a WeChat Official Account draft media_id for publication',
+  description: 'Submit a WeChat Article draft media_id for publication',
   strategy: Strategy.LOCAL,
   browser: false,
   args: [

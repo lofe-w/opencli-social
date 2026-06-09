@@ -15,13 +15,13 @@ import {
   uploadContentImage,
   uploadPermanentImage,
   waitForPublishCompletion,
-} from './lib/weixin.js';
+} from './lib/wechat-article.js';
 
 cli({
-  site: 'social-weixin',
+  site: 'social-wechat-article',
   name: 'publish-article',
   access: 'write',
-  description: 'Create a WeChat Official Account article draft and optionally submit it',
+  description: 'Create a WeChat Article draft and optionally submit it',
   strategy: Strategy.LOCAL,
   browser: false,
   args: [

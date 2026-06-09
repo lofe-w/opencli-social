@@ -1,8 +1,8 @@
 import { cli, Strategy } from '@jackwener/opencli/registry';
-import { getAccessToken, profileAuditFields, requireExecute, uploadContentImage } from './lib/weixin.js';
+import { getAccessToken, profileAuditFields, requireExecute, uploadContentImage } from './lib/wechat-article.js';
 
 cli({
-  site: 'social-weixin',
+  site: 'social-wechat-article',
   name: 'upload-content-image',
   access: 'write',
   description: 'Upload inline article image and return a WeChat CDN URL',

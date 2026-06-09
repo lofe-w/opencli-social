@@ -5,12 +5,12 @@
 OpenCLI 会扁平扫描插件包目录。任何使用 `cli(...)` 注册命令的文件都必须直接放在包根目录：
 
 ```text
-packages/social-weixin/
+packages/social-wechat-article/
   auth.js
   draft-add.js
   publish.js
   lib/
-    weixin.js
+    wechat-article.js
 ```
 
 辅助模块可以放在 `lib/` 下。
@@ -20,7 +20,7 @@ packages/social-weixin/
 推荐形态：
 
 ```text
-packages/social-weixin/
+packages/social-wechat-article/
   comments-list.js
   comments-reply.js
   posts-list.js
@@ -51,13 +51,13 @@ packages/social-weixin/
 本地开发：
 
 ```bash
-opencli plugin install file:///absolute/path/opencli-social/packages/social-weixin
+opencli plugin install file:///absolute/path/opencli-social/packages/social-wechat-article
 ```
 
 GitHub monorepo 分发：
 
 ```bash
 opencli plugin install github:<owner>/opencli-social
-opencli plugin install github:<owner>/opencli-social/social-weixin
-opencli plugin update social-weixin
+opencli plugin install github:<owner>/opencli-social/social-wechat-article
+opencli plugin update social-wechat-article
 ```
