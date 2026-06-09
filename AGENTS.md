@@ -30,6 +30,8 @@ OpenCLI Social 是一组用于操作社交和内容平台的 OpenCLI 插件 mono
 | `design/03_implementation_guide/opencli_plugin_guide.md` | OpenCLI 插件实现约定 | 添加命令或包前 |
 | `packages/social-wechat-article/CLAUDE.md` | 微信插件本地指南 | 编辑该包前 |
 | `packages/social-weixin-channels/CLAUDE.md` | 微信视频号插件本地指南 | 编辑该包前 |
+| `skills/social-wechat-article/SKILL.md` | 公众号文章 Agent 使用策略 | 让 Agent 操作公众号文章发布链路前 |
+| `skills/social-weixin-channels/SKILL.md` | 视频号 Agent 使用策略 | 让 Agent 操作视频号发布链路前 |
 | `issues/` | 本地 issue 和实现说明 | 规划工作时 |
 | `memory/` | 持久化项目记忆 | 恢复上下文时 |
 
@@ -52,16 +54,20 @@ OpenCLI Social 是一组用于操作社交和内容平台的 OpenCLI 插件 mono
 
 ```bash
 npm test
-opencli plugin install file:///Users/fushuai/GitRepository/opencli-social/packages/social-wechat-article
-opencli social-wechat-article auth
 ```
 
 ## 分发
 
-本地开发期间，使用 `file://` 安装子插件目录。仓库发布到 GitHub 后，用户可以安装整个 monorepo 或指定子插件：
+用户可以安装整个 monorepo 或指定子插件：
 
 ```bash
-opencli plugin install github:<owner>/opencli-social
-opencli plugin install github:<owner>/opencli-social/social-wechat-article
-opencli plugin update social-wechat-article
+# 安装 monorepo 中的全部 enabled 子插件
+opencli plugin install github:lofe-w/opencli-social
+
+# 或安装单个子插件
+opencli plugin install github:lofe-w/opencli-social/social-wechat-article
+opencli plugin install github:lofe-w/opencli-social/social-weixin-channels
+
+# 后续更新
+opencli plugin update --all
 ```

@@ -1,0 +1,4 @@
+interface:
+  display_name: "微信公众号文章发布"
+  short_description: "安全编排微信公众号文章发布、诊断与状态查询工作流程"
+  default_prompt: "使用 $social-wechat-article 安全配置、诊断、创建草稿、发布并查询微信公众号文章状态。"

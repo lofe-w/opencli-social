@@ -13,25 +13,37 @@ Each platform lives in its own package and exposes a `social-<platform>` command
 
 Planned platform packages and capability boundaries are tracked in [`design/00_product_overview/product_overview.md`](design/00_product_overview/product_overview.md) and [`design/domain.md`](design/domain.md).
 
-## Local Development
+## Install
 
 ```bash
-npm test
-opencli plugin install file:///Users/fushuai/GitRepository/opencli-social/packages/social-wechat-article
-opencli social-wechat-article doctor
-opencli plugin install file:///Users/fushuai/GitRepository/opencli-social/packages/social-weixin-channels
-opencli social-weixin-channels doctor -f json
+# Install all enabled plugins from the monorepo
+opencli plugin install github:lofe-w/opencli-social
+
+# Or install one plugin
+opencli plugin install github:lofe-w/opencli-social/social-wechat-article
+opencli plugin install github:lofe-w/opencli-social/social-weixin-channels
+
+# Update later
+opencli plugin update --all
 ```
 
-## GitHub Install
+## Agent Skills
 
-After this repository is published to GitHub:
+This repository ships thin companion skills for agents that operate high-risk publishing workflows. They are not command references; use OpenCLI help and `-f json` output as the source of truth for parameters, fields, and errors.
+
+Install OpenCLI first:
 
 ```bash
-opencli plugin install github:<owner>/opencli-social
-opencli plugin install github:<owner>/opencli-social/social-wechat-article
-opencli plugin update social-wechat-article
+npm install -g @jackwener/opencli@latest
+opencli --version
 ```
+
+```bash
+npx skills add lofe-w/opencli-social --skill social-wechat-article
+npx skills add lofe-w/opencli-social --skill social-weixin-channels
+```
+
+Use `social-wechat-article` when an agent needs to configure, draft, publish, or check WeChat Official Account articles. Use `social-weixin-channels` when an agent needs to diagnose login, preflight videos, handle HITL, publish, resume jobs, or inspect unknown WeChat Channels publish results.
 
 ## Documentation
 
@@ -44,3 +56,5 @@ opencli plugin update social-wechat-article
 | [`design/03_implementation_guide/opencli_plugin_guide.md`](design/03_implementation_guide/opencli_plugin_guide.md) | OpenCLI plugin implementation guide |
 | [`packages/social-wechat-article/README.md`](packages/social-wechat-article/README.md) | `social-wechat-article` setup, commands, validation, and live publishing checklist |
 | [`packages/social-weixin-channels/README.md`](packages/social-weixin-channels/README.md) | `social-weixin-channels` setup, commands, HITL, and publishing checklist |
+| [`skills/social-wechat-article/SKILL.md`](skills/social-wechat-article/SKILL.md) | Agent strategy for safe WeChat Official Account article workflows |
+| [`skills/social-weixin-channels/SKILL.md`](skills/social-weixin-channels/SKILL.md) | Agent strategy for safe WeChat Channels publishing workflows |
