@@ -3,9 +3,9 @@
   "opencli": ">=1.8.0",
   "description": "Social platform plugins for OpenCLI",
   "plugins": {
-    "social-weixin": {
-      "path": "packages/social-weixin",
-      "description": "Operate WeChat Official Account publishing and social workflows"
+    "social-wechat-article": {
+      "path": "packages/social-wechat-article",
+      "description": "Operate WeChat Article publishing and social workflows"
     },
     "social-weixin-channels": {
       "path": "packages/social-weixin-channels",

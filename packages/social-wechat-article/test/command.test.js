@@ -12,8 +12,8 @@ const PACKAGE_ROOT = new URL('..', import.meta.url);
 const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 
 test('OpenCLI commands can create and publish a draft against a mock WeChat API', async (t) => {
-  if (!opencliSocialWeixinAvailable()) {
-    t.skip('opencli social-weixin is not installed in this environment');
+  if (!opencliSocialWechatArticleAvailable()) {
+    t.skip('opencli social-wechat-article is not installed in this environment');
     return;
   }
 
@@ -75,7 +75,7 @@ test('OpenCLI commands can create and publish a draft against a mock WeChat API'
   const commonEnv = createConfiguredEnv({ apiBase, appId });
 
   const draft = await runOpencli([
-    'social-weixin',
+    'social-wechat-article',
     'draft-add',
     '<p>hello</p>',
     '--title',
@@ -90,7 +90,7 @@ test('OpenCLI commands can create and publish a draft against a mock WeChat API'
   assert.equal(draft[0].media_id, 'draft-media-123');
 
   const published = await runOpencli([
-    'social-weixin',
+    'social-wechat-article',
     'publish',
     'draft-media-123',
     '--wait',
@@ -108,7 +108,7 @@ test('OpenCLI commands can create and publish a draft against a mock WeChat API'
   assert.equal(published[0].msg_data_id, 'msg-123');
 
   const queried = await runOpencli([
-    'social-weixin',
+    'social-wechat-article',
     'publish-status',
     'publish-123',
     '--wait',
@@ -133,12 +133,12 @@ test('OpenCLI commands can create and publish a draft against a mock WeChat API'
 });
 
 test('publish-article uploads cover and inline images before publishing', async (t) => {
-  if (!opencliSocialWeixinAvailable()) {
-    t.skip('opencli social-weixin is not installed in this environment');
+  if (!opencliSocialWechatArticleAvailable()) {
+    t.skip('opencli social-wechat-article is not installed in this environment');
     return;
   }
 
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-article-'));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-wechat-article-article-'));
   const coverPath = path.join(tempDir, 'cover.jpg');
   const inlinePath = path.join(tempDir, 'inline.png');
   const articlePath = path.join(tempDir, 'article.html');
@@ -224,7 +224,7 @@ test('publish-article uploads cover and inline images before publishing', async 
   });
 
   const published = await runOpencli([
-    'social-weixin',
+    'social-wechat-article',
     'publish-article',
     '--content-file',
     articlePath,
@@ -264,12 +264,12 @@ test('publish-article uploads cover and inline images before publishing', async 
 });
 
 test('standalone upload commands call the expected WeChat media endpoints', async (t) => {
-  if (!opencliSocialWeixinAvailable()) {
-    t.skip('opencli social-weixin is not installed in this environment');
+  if (!opencliSocialWechatArticleAvailable()) {
+    t.skip('opencli social-wechat-article is not installed in this environment');
     return;
   }
 
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-weixin-upload-'));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-wechat-article-upload-'));
   const coverPath = path.join(tempDir, 'cover.jpg');
   const inlinePath = path.join(tempDir, 'inline.png');
   fs.writeFileSync(coverPath, Buffer.from([0xff, 0xd8, 0xff, 0xd9]));
@@ -323,7 +323,7 @@ test('standalone upload commands call the expected WeChat media endpoints', asyn
   });
 
   const cover = await runOpencli([
-    'social-weixin',
+    'social-wechat-article',
     'upload-image',
     coverPath,
     '--execute',
@@ -335,7 +335,7 @@ test('standalone upload commands call the expected WeChat media endpoints', asyn
   assert.equal(cover[0].url, 'https://mmbiz.qpic.cn/standalone-cover.jpg');
 
   const inline = await runOpencli([
-    'social-weixin',
+    'social-wechat-article',
     'upload-content-image',
     inlinePath,
     '--execute',
@@ -354,18 +354,18 @@ test('standalone upload commands call the expected WeChat media endpoints', asyn
 });
 
 test('doctor command reports missing auth as structured output', async (t) => {
-  if (!opencliSocialWeixinAvailable()) {
-    t.skip('opencli social-weixin is not installed in this environment');
+  if (!opencliSocialWechatArticleAvailable()) {
+    t.skip('opencli social-wechat-article is not installed in this environment');
     return;
   }
 
   const rows = await runOpencli([
-    'social-weixin',
+    'social-wechat-article',
     'doctor',
     '-f',
     'json',
   ], {
-    ...withoutWeixinProfile(process.env),
+    ...withoutWechatArticleProfile(process.env),
   });
 
   assert.equal(rows[0].status, 'missing_auth');
@@ -374,8 +374,8 @@ test('doctor command reports missing auth as structured output', async (t) => {
 });
 
 test('request command supports read-only raw GET and execute-gated POST', async (t) => {
-  if (!opencliSocialWeixinAvailable()) {
-    t.skip('opencli social-weixin is not installed in this environment');
+  if (!opencliSocialWechatArticleAvailable()) {
+    t.skip('opencli social-wechat-article is not installed in this environment');
     return;
   }
 
@@ -405,7 +405,7 @@ test('request command supports read-only raw GET and execute-gated POST', async 
   });
 
   const getRows = await runOpencli([
-    'social-weixin',
+    'social-wechat-article',
     'request',
     'get',
     '/cgi-bin/test',
@@ -417,7 +417,7 @@ test('request command supports read-only raw GET and execute-gated POST', async 
   assert.equal(JSON.stringify(getRows).includes('raw-secret-token'), false);
 
   const dryRunRows = await runOpencli([
-    'social-weixin',
+    'social-wechat-article',
     'request',
     'post',
     '/cgi-bin/test',
@@ -429,7 +429,7 @@ test('request command supports read-only raw GET and execute-gated POST', async 
   assert.equal(dryRunRows[0].status, 'dry_run');
 
   const postRows = await runOpencli([
-    'social-weixin',
+    'social-wechat-article',
     'request',
     'post',
     '/cgi-bin/test',
@@ -447,44 +447,44 @@ test('request command supports read-only raw GET and execute-gated POST', async 
 });
 
 test('live publish script dry-runs the generated sample without remote writes', async (t) => {
-  if (!opencliSocialWeixinAvailable()) {
-    t.skip('opencli social-weixin is not installed in this environment');
+  if (!opencliSocialWechatArticleAvailable()) {
+    t.skip('opencli social-wechat-article is not installed in this environment');
     return;
   }
 
-  const result = await spawnCommand('npm', ['run', 'publish:weixin-live-sample', '--', '--dry-run'], {
+  const result = await spawnCommand('npm', ['run', 'publish:wechat-article-live-sample', '--', '--dry-run'], {
     cwd: REPO_ROOT,
     env: {
       ...createConfiguredEnv(),
-      SOCIAL_WEIXIN_LIVE_TITLE: 'OpenCLI 脚本 dry-run 测试',
+      SOCIAL_WECHAT_ARTICLE_LIVE_TITLE: 'OpenCLI 脚本 dry-run 测试',
     },
   });
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Created .*tmp\/weixin-live\/article\.html/);
+  assert.match(result.stdout, /Created .*tmp\/wechat-article-live\/article\.html/);
   assert.match(result.stdout, /dry_run_draft_publish_and_wait/);
   assert.match(result.stdout, /OpenCLI 脚本 dry-run 测试/);
 });
 
 test('live publish script fails early when credentials are missing', async () => {
-  const result = await spawnCommand('node', ['scripts/run-weixin-live-publish.js'], {
+  const result = await spawnCommand('node', ['scripts/run-wechat-article-live-publish.js'], {
     cwd: REPO_ROOT,
-    env: withoutWeixinProfile(process.env),
+    env: withoutWechatArticleProfile(process.env),
   });
 
   assert.equal(result.code, 2, result.stderr || result.stdout);
   assert.match(result.stderr, /Missing OpenCLI profile for live publish/);
 });
 
-function opencliSocialWeixinAvailable() {
-  const result = spawnSync('opencli', ['social-weixin', 'doctor', '-f', 'json'], {
+function opencliSocialWechatArticleAvailable() {
+  const result = spawnSync('opencli', ['social-wechat-article', 'doctor', '-f', 'json'], {
     cwd: PACKAGE_ROOT,
     env: {
-      ...withoutWeixinProfile(process.env),
+      ...withoutWechatArticleProfile(process.env),
     },
     encoding: 'utf8',
   });
-  return result.status === 0 && !/unknown command 'social-weixin'/.test(result.stderr);
+  return result.status === 0 && !/unknown command 'social-wechat-article'/.test(result.stderr);
 }
 
 async function runOpencli(args, env) {
@@ -541,15 +541,15 @@ function createConfiguredEnv(options = {}) {
   const profile = options.profile || `oa-test-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'opencli-social-home-'));
   const env = {
-    ...withoutWeixinProfile(process.env),
+    ...withoutWechatArticleProfile(process.env),
     OPENCLI_PROFILE: profile,
     OPENCLI_SOCIAL_HOME: root,
   };
-  const dir = path.join(root, 'profiles', profile, 'social-weixin');
+  const dir = path.join(root, 'profiles', profile, 'social-wechat-article');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify({
     schema_version: 1,
-    platform: 'social-weixin',
+    platform: 'social-wechat-article',
     profile,
     display_name: options.displayName || '测试公众号',
     app_id: options.appId || `wx-test-${process.pid}-${Date.now()}`,
@@ -561,14 +561,14 @@ function createConfiguredEnv(options = {}) {
   return env;
 }
 
-function withoutWeixinProfile(env) {
+function withoutWechatArticleProfile(env) {
   const output = { ...env };
   for (const key of [
-    'SOCIAL_WEIXIN_ACCESS_TOKEN',
-    'SOCIAL_WEIXIN_APP_ID',
-    'SOCIAL_WEIXIN_APP_SECRET',
-    'SOCIAL_WEIXIN_API_BASE',
-    'SOCIAL_WEIXIN_CACHE_DIR',
+    'SOCIAL_WECHAT_ARTICLE_ACCESS_TOKEN',
+    'SOCIAL_WECHAT_ARTICLE_APP_ID',
+    'SOCIAL_WECHAT_ARTICLE_APP_SECRET',
+    'SOCIAL_WECHAT_ARTICLE_API_BASE',
+    'SOCIAL_WECHAT_ARTICLE_CACHE_DIR',
     'OPENCLI_PROFILE',
     'OPENCLI_SOCIAL_HOME',
     'OPENCLI_CONFIG_DIR',

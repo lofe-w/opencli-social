@@ -1,6 +1,6 @@
 # 微信视频号
 
-`social-weixin-channels` 面向视频号助手的内容发布流程。与公众号 `social-weixin` 不同，视频号发布目前没有可用的公开官方内容发布 API，因此本插件以 OpenCLI 浏览器会话驱动 `channels.weixin.qq.com` 网页端。
+`social-weixin-channels` 面向视频号助手的内容发布流程。与公众号 `social-wechat-article` 不同，视频号发布目前没有可用的公开官方内容发布 API，因此本插件以 OpenCLI 浏览器会话驱动 `channels.weixin.qq.com` 网页端。
 
 ## 目标
 

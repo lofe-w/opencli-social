@@ -1,13 +1,13 @@
 import * as fs from 'node:fs';
 import { cli, Strategy } from '@jackwener/opencli/registry';
 import { ArgumentError } from '@jackwener/opencli/errors';
-import { parseBool, profileAuditFields, rawRequest, requireExecute } from './lib/weixin.js';
+import { parseBool, profileAuditFields, rawRequest, requireExecute } from './lib/wechat-article.js';
 
 cli({
-  site: 'social-weixin',
+  site: 'social-wechat-article',
   name: 'request',
   access: 'write',
-  description: 'Raw WeChat API request using configured social-weixin auth',
+  description: 'Raw WeChat API request using configured social-wechat-article auth',
   strategy: Strategy.LOCAL,
   browser: false,
   args: [

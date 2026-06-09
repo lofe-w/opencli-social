@@ -11,7 +11,7 @@ import {
   rewriteInlineImages,
   uploadContentImage,
   uploadPermanentImage,
-} from './lib/weixin.js';
+} from './lib/wechat-article.js';
 
 const articleArgs = [
   { name: 'content', positional: true, required: false, help: 'Article HTML content' },
@@ -32,10 +32,10 @@ const articleArgs = [
 ];
 
 cli({
-  site: 'social-weixin',
+  site: 'social-wechat-article',
   name: 'draft-add',
   access: 'write',
-  description: 'Create a single-article WeChat Official Account draft',
+  description: 'Create a single-article WeChat Article draft',
   strategy: Strategy.LOCAL,
   browser: false,
   args: articleArgs,

@@ -2,9 +2,9 @@ import { spawnSync } from 'node:child_process';
 
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has('--dry-run');
-const title = process.env.SOCIAL_WEIXIN_LIVE_TITLE || 'OpenCLI 微信发布测试';
+const title = process.env.SOCIAL_WECHAT_ARTICLE_LIVE_TITLE || 'OpenCLI 微信发布测试';
 
-run('npm', ['run', 'prepare:weixin-live-sample']);
+run('npm', ['run', 'prepare:wechat-article-live-sample']);
 
 if (dryRun) {
   run('opencli', publishArgs({ title, execute: false }));
@@ -19,19 +19,19 @@ if (!process.env.OPENCLI_PROFILE) {
   process.exit(2);
 }
 
-run('opencli', ['social-weixin', 'auth']);
+run('opencli', ['social-wechat-article', 'auth']);
 run('opencli', publishArgs({ title, execute: true }));
 
 function publishArgs(options) {
   const command = [
-    'social-weixin',
+    'social-wechat-article',
     'publish-article',
     '--content-file',
-    'tmp/weixin-live/article.html',
+    'tmp/wechat-article-live/article.html',
     '--title',
     options.title,
     '--cover-image',
-    'tmp/weixin-live/cover.png',
+    'tmp/wechat-article-live/cover.png',
     '--upload-inline-images',
     '--publish',
     '--wait',

@@ -4,13 +4,13 @@ import {
   getPublishStatus,
   publishStatusRow,
   waitForPublishCompletion,
-} from './lib/weixin.js';
+} from './lib/wechat-article.js';
 
 cli({
-  site: 'social-weixin',
+  site: 'social-wechat-article',
   name: 'publish-status',
   access: 'read',
-  description: 'Query WeChat Official Account publish status by publish_id',
+  description: 'Query WeChat Article publish status by publish_id',
   strategy: Strategy.LOCAL,
   browser: false,
   args: [

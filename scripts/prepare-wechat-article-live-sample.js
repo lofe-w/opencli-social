@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { deflateSync } from 'node:zlib';
 
-const outputDir = path.resolve('tmp/weixin-live');
+const outputDir = path.resolve('tmp/wechat-article-live');
 const coverPath = path.join(outputDir, 'cover.png');
 const inlinePath = path.join(outputDir, 'inline.png');
 const articlePath = path.join(outputDir, 'article.html');
@@ -29,7 +29,7 @@ writePng(inlinePath, 480, 240, (x, y) => {
 
 fs.writeFileSync(articlePath, [
   '<h1>OpenCLI 微信发布测试</h1>',
-  '<p>这是一篇由 social-weixin 生成的测试文章，用于验证微信公众号草稿创建、素材上传和发布等待链路。</p>',
+  '<p>这是一篇由 social-wechat-article 生成的测试文章，用于验证微信公众号草稿创建、素材上传和发布等待链路。</p>',
   '<p><img src="./inline.png" alt="OpenCLI live publish sample"></p>',
   '<p>如果你在公众号后台看到这篇文章，说明 OpenCLI Social 已经跑通真实发布流程。</p>',
 ].join('\n'), 'utf8');

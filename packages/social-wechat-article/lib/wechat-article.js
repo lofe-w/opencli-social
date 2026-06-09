@@ -6,14 +6,14 @@ import { ArgumentError, CommandExecutionError } from '@jackwener/opencli/errors'
 
 const DEFAULT_API_BASE = 'https://api.weixin.qq.com';
 const DEFAULT_STATE_DIR = path.join(os.homedir(), '.opencli-social');
-const SITE = 'social-weixin';
+const SITE = 'social-wechat-article';
 const TOKEN_SKEW_MS = 5 * 60 * 1000;
 const ONE_MIB = 1024 * 1024;
 const TEN_MIB = 10 * ONE_MIB;
 
 const PERMANENT_IMAGE_EXTENSIONS = new Set(['.bmp', '.gif', '.jpg', '.jpeg', '.png']);
 const CONTENT_IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png']);
-const WEIXIN_IMAGE_HOSTS = new Set(['mmbiz.qpic.cn', 'mmbiz.qlogo.cn', 'mmbiz.qpic.com']);
+const WECHAT_ARTICLE_IMAGE_HOSTS = new Set(['mmbiz.qpic.cn', 'mmbiz.qlogo.cn', 'mmbiz.qpic.com']);
 const PUBLISH_STATUS = new Map([
   [0, { status: 'published', terminal: true, failure: false, label: 'success' }],
   [1, { status: 'publishing', terminal: false, failure: false, label: 'publishing' }],
@@ -416,7 +416,7 @@ export async function rewriteInlineImages(content, options = {}) {
 
     output += String(content).slice(cursor, srcStart);
 
-    if (isWeixinImageSrc(src)) {
+    if (isWechatArticleImageSrc(src)) {
       output += src;
       images.push({ source: src, url: src, status: 'kept' });
     } else {
@@ -862,7 +862,7 @@ async function requestJson(url, options = {}) {
     throw new CommandExecutionError(`WeChat API HTTP ${response.status}: ${JSON.stringify(data)}`);
   }
   if (typeof data.errcode === 'number' && data.errcode !== 0) {
-    throw new CommandExecutionError(formatWeixinApiError(data));
+    throw new CommandExecutionError(formatWechatArticleApiError(data));
   }
   return data;
 }
@@ -923,7 +923,7 @@ function validateInlineImageSources(content) {
         `Article inline image must use a WeChat uploadimg URL. Invalid image src: ${src}`
       );
     }
-    if (!WEIXIN_IMAGE_HOSTS.has(parsed.hostname)) {
+    if (!WECHAT_ARTICLE_IMAGE_HOSTS.has(parsed.hostname)) {
       throw new ArgumentError(
         `Article inline image must use a WeChat uploadimg URL before draft submission: ${src}`
       );
@@ -931,10 +931,10 @@ function validateInlineImageSources(content) {
   }
 }
 
-function isWeixinImageSrc(src) {
+function isWechatArticleImageSrc(src) {
   try {
     const parsed = new URL(src);
-    return WEIXIN_IMAGE_HOSTS.has(parsed.hostname);
+    return WECHAT_ARTICLE_IMAGE_HOSTS.has(parsed.hostname);
   } catch {
     return false;
   }
@@ -960,18 +960,18 @@ function resolveLocalImageSource(src, baseDir) {
   return path.resolve(baseDir, src);
 }
 
-function formatWeixinApiError(data) {
+function formatWechatArticleApiError(data) {
   const base = `WeChat API error ${data.errcode}: ${data.errmsg || ''}`;
   switch (Number(data.errcode)) {
     case 40164:
-      return `${base}. Configure the current server IP in the WeChat Official Account API IP whitelist.`;
+      return `${base}. Configure the current server IP in the WeChat Article IP whitelist.`;
     case 48001:
       return `${base}. The account is not authorized for this API; publishing APIs require an eligible account and may require certification.`;
     case 53503:
-      return `${base}. The draft did not pass WeChat publish checks; inspect the draft in the Official Account console.`;
+      return `${base}. The draft did not pass WeChat publish checks; inspect the draft in the WeChat Article console.`;
     case 53504:
     case 53505:
-      return `${base}. WeChat requires this draft to be opened and saved manually in the Official Account console before publishing.`;
+      return `${base}. WeChat requires this draft to be opened and saved manually in the WeChat Article console before publishing.`;
     default:
       return base;
   }

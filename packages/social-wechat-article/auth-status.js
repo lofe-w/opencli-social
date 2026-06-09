@@ -1,11 +1,11 @@
 import { cli, Strategy } from '@jackwener/opencli/registry';
-import { describeAuthConfig } from './lib/weixin.js';
+import { describeAuthConfig } from './lib/wechat-article.js';
 
 cli({
-  site: 'social-weixin',
+  site: 'social-wechat-article',
   name: 'auth-status',
   access: 'read',
-  description: 'Inspect the current OpenCLI profile social-weixin configuration without printing secrets',
+  description: 'Inspect the current OpenCLI profile social-wechat-article configuration without printing secrets',
   strategy: Strategy.LOCAL,
   browser: false,
   args: [],

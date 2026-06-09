@@ -7,8 +7,8 @@
     "packages/*"
   ],
   "scripts": {
-    "prepare:weixin-live-sample": "node scripts/prepare-weixin-live-sample.js",
-    "publish:weixin-live-sample": "node scripts/run-weixin-live-publish.js",
+    "prepare:wechat-article-live-sample": "node scripts/prepare-wechat-article-live-sample.js",
+    "publish:wechat-article-live-sample": "node scripts/run-wechat-article-live-publish.js",
     "test": "node --test packages/*/test/*.test.js"
   },
   "engines": {
