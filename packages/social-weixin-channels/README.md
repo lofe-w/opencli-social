@@ -7,7 +7,7 @@ The plugin does not store cookies or browser storage. OpenCLI profiles own login
 ## Install
 
 ```bash
-opencli plugin install file:///Users/fushuai/GitRepository/opencli-social/packages/social-weixin-channels
+opencli plugin install github:lofe-w/opencli-social/social-weixin-channels
 opencli social-weixin-channels doctor -f json
 ```
 

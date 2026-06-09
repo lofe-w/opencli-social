@@ -48,16 +48,14 @@ packages/social-wechat-article/
 
 ## 分发
 
-本地开发：
-
 ```bash
-opencli plugin install file:///absolute/path/opencli-social/packages/social-wechat-article
-```
+# 安装 monorepo 中的全部 enabled 子插件
+opencli plugin install github:lofe-w/opencli-social
 
-GitHub monorepo 分发：
+# 或安装单个子插件
+opencli plugin install github:lofe-w/opencli-social/social-wechat-article
+opencli plugin install github:lofe-w/opencli-social/social-weixin-channels
 
-```bash
-opencli plugin install github:<owner>/opencli-social
-opencli plugin install github:<owner>/opencli-social/social-wechat-article
-opencli plugin update social-wechat-article
+# 后续更新
+opencli plugin update --all
 ```

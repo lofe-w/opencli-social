@@ -74,7 +74,7 @@ HITL 是视频号插件的一等状态，不是异常。命令遇到必须人工
   "profile": "work",
   "url": "https://channels.weixin.qq.com/platform/post/create",
   "message": "请在 OpenCLI 连接的 Chrome profile 中完成微信扫码登录视频号助手。",
-  "screenshot_path": "/Users/fushuai/.opencli-social/channels/jobs/job_20260605_abc123/login.png",
+  "screenshot_path": "~/.opencli-social/channels/jobs/job_20260605_abc123/login.png",
   "resume_command": "opencli --profile work social-weixin-channels jobs-resume job_20260605_abc123 --execute -f json",
   "expires_at": "2026-06-05T12:34:56+08:00"
 }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "微信视频号发布"
+  short_description: "安全编排微信视频号登录、预检、人工断点与发布恢复流程"
+  default_prompt: "使用 $social-weixin-channels 安全诊断登录、预检视频、处理人工断点、发布并恢复微信视频号 job。"
