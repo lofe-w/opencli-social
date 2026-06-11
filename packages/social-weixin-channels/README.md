@@ -13,6 +13,10 @@ opencli plugin list -f json
 opencli list -f json | rg 'social-weixin-channels'
 ```
 
+If OpenCLI prints `esbuild not found` during installation, verify the command
+list before treating it as a failure. This package ships ESM JavaScript files and
+does not require TypeScript transpilation.
+
 Companion Agent Skill:
 
 ```bash

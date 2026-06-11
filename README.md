@@ -88,6 +88,16 @@ opencli plugin list -f json
 opencli list -f json | rg 'social-wechat-article|social-weixin-channels'
 ```
 
+OpenCLI may print this warning during GitHub plugin installation:
+
+```text
+esbuild not found. TS plugin files will not be transpiled and may fail to load.
+```
+
+OpenCLI Social plugins are plain ESM JavaScript, not TypeScript. Treat this as a
+non-fatal OpenCLI host warning when `opencli plugin install` exits successfully
+and `opencli list -f json` shows the expected `social-*` commands.
+
 ### Step 2 - Choose and install Agent Skills
 
 ```bash
