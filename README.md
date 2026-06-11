@@ -15,6 +15,19 @@ Planned platform packages and capability boundaries are tracked in [`design/00_p
 
 ## Install
 
+OpenCLI Social is intentionally distributed as independent OpenCLI plugins and
+companion Agent Skills. Install only the parts you need.
+
+### Runtime
+
+```bash
+node --version
+command -v opencli || npm install -g @jackwener/opencli@latest
+opencli --version
+```
+
+### CLI plugins
+
 ```bash
 # Install all enabled plugins from the monorepo
 opencli plugin install github:lofe-w/opencli-social
@@ -27,23 +40,122 @@ opencli plugin install github:lofe-w/opencli-social/social-weixin-channels
 opencli plugin update --all
 ```
 
+Verify CLI discovery before configuring accounts:
+
+```bash
+opencli plugin list -f json
+opencli list -f json | rg 'social-wechat-article|social-weixin-channels'
+```
+
 ## Agent Skills
 
 This repository ships thin companion skills for agents that operate high-risk publishing workflows. They are not command references; use OpenCLI help and `-f json` output as the source of truth for parameters, fields, and errors.
 
-Install OpenCLI first:
+Install only the skills you want the agent to use:
 
 ```bash
-npm install -g @jackwener/opencli@latest
-opencli --version
+npx -y skills@latest add lofe-w/opencli-social --skill social-wechat-article -g -y --copy
+npx -y skills@latest add lofe-w/opencli-social --skill social-weixin-channels -g -y --copy
 ```
 
+Verify skill discovery:
+
 ```bash
-npx skills add lofe-w/opencli-social --skill social-wechat-article
-npx skills add lofe-w/opencli-social --skill social-weixin-channels
+npx -y skills@latest ls -g --json | rg 'social-wechat-article|social-weixin-channels'
 ```
 
 Use `social-wechat-article` when an agent needs to configure, draft, publish, or check WeChat Official Account articles. Use `social-weixin-channels` when an agent needs to diagnose login, preflight videos, handle HITL, publish, resume jobs, or inspect unknown WeChat Channels publish results.
+
+## Quick Start For AI Agents
+
+If you are an AI Agent helping a user install this project, do not infer missing
+setup steps. Treat installation, account configuration, and readiness checks as
+separate phases.
+
+### Step 1 - Choose and install CLI plugins
+
+```bash
+# Pick one:
+opencli plugin install github:lofe-w/opencli-social
+opencli plugin install github:lofe-w/opencli-social/social-wechat-article
+opencli plugin install github:lofe-w/opencli-social/social-weixin-channels
+```
+
+Then verify:
+
+```bash
+opencli plugin list -f json
+opencli list -f json | rg 'social-wechat-article|social-weixin-channels'
+```
+
+### Step 2 - Choose and install Agent Skills
+
+```bash
+# Pick one or both:
+npx -y skills@latest add lofe-w/opencli-social --skill social-wechat-article -g -y --copy
+npx -y skills@latest add lofe-w/opencli-social --skill social-weixin-channels -g -y --copy
+```
+
+Then verify:
+
+```bash
+npx -y skills@latest ls -g --json | rg 'social-wechat-article|social-weixin-channels'
+```
+
+### Step 3 - Configure authentication
+
+Installation only proves the command and skill can be discovered. The CLI is not
+ready to operate a platform account until the relevant authentication check
+passes.
+
+For WeChat Official Account articles, ask the user for a profile alias, AppID,
+and AppSecret. The AppSecret should be passed through stdin or an environment
+variable, not pasted into chat logs:
+
+```bash
+printf '%s' "$WECHAT_APP_SECRET" | OPENCLI_PROFILE=oa-a opencli social-wechat-article auth-config \
+  --app-id "$WECHAT_APP_ID" \
+  --display-name "公众号A" \
+  --app-secret-stdin \
+  --execute \
+  -f json
+
+OPENCLI_PROFILE=oa-a opencli social-wechat-article auth-status -f json
+OPENCLI_PROFILE=oa-a opencli social-wechat-article doctor --check-token -f json
+```
+
+The current machine or server outbound IP must be included in the WeChat Official
+Account API IP whitelist before token verification can succeed.
+
+For WeChat Channels, browser login is the authentication step. The user may need
+to scan a QR code, confirm on mobile, or select the target Channels account:
+
+```bash
+opencli doctor
+opencli social-weixin-channels doctor -f json
+opencli social-weixin-channels auth-begin --execute -f json
+opencli social-weixin-channels auth-status -f json
+opencli social-weixin-channels accounts-list -f json
+opencli social-weixin-channels account-current -f json
+```
+
+If a command returns `status=needs_human`, pass `message`, `url`,
+`screenshot_path`, and `resume_command` to the user. After the user completes
+the action, run the returned `resume_command`; do not invent a replacement.
+
+### Step 4 - Verify ready state
+
+Use these checks before attempting any remote write:
+
+```bash
+OPENCLI_PROFILE=oa-a opencli social-wechat-article doctor --check-token -f json
+opencli social-weixin-channels auth-status -f json
+opencli social-weixin-channels account-current -f json
+```
+
+Remote writes such as uploading media, creating drafts, publishing, saving jobs,
+or cancelling jobs require explicit `--execute`. Dry runs and read-only
+diagnostics should be used first.
 
 ## Documentation
 
