@@ -29,7 +29,7 @@ opencli plugin install github:lofe-w/opencli-social/social-wechat-article
 Skill 缺失时，安装对应 Agent Skill：
 
 ```bash
-npx -y skills@latest add lofe-w/opencli-social --skill social-wechat-article -g -y --copy
+npx -y skills@latest add lofe-w/opencli-social --skill social-wechat-article -y -g
 ```
 
 安装完成只说明命令可发现。真正可发布前，必须完成 profile 凭据配置并通过 `doctor --check-token`。

@@ -16,7 +16,8 @@ Planned platform packages and capability boundaries are tracked in [`design/00_p
 ## Install
 
 OpenCLI Social is intentionally distributed as independent OpenCLI plugins and
-companion Agent Skills. Install only the parts you need.
+companion Agent Skills. Install the CLI plugins you need; the root skill command
+installs all companion Agent Skills from this repository.
 
 ### Runtime
 
@@ -51,11 +52,10 @@ opencli list -f json | rg 'social-wechat-article|social-weixin-channels'
 
 This repository ships thin companion skills for agents that operate high-risk publishing workflows. They are not command references; use OpenCLI help and `-f json` output as the source of truth for parameters, fields, and errors.
 
-Install only the skills you want the agent to use:
+Install all companion skills from this repository:
 
 ```bash
-npx -y skills@latest add lofe-w/opencli-social --skill social-wechat-article -g -y --copy
-npx -y skills@latest add lofe-w/opencli-social --skill social-weixin-channels -g -y --copy
+npx -y skills@latest add lofe-w/opencli-social -y -g
 ```
 
 Verify skill discovery:
@@ -98,12 +98,10 @@ OpenCLI Social plugins are plain ESM JavaScript, not TypeScript. Treat this as a
 non-fatal OpenCLI host warning when `opencli plugin install` exits successfully
 and `opencli list -f json` shows the expected `social-*` commands.
 
-### Step 2 - Choose and install Agent Skills
+### Step 2 - Install Agent Skills
 
 ```bash
-# Pick one or both:
-npx -y skills@latest add lofe-w/opencli-social --skill social-wechat-article -g -y --copy
-npx -y skills@latest add lofe-w/opencli-social --skill social-weixin-channels -g -y --copy
+npx -y skills@latest add lofe-w/opencli-social -y -g
 ```
 
 Then verify:
