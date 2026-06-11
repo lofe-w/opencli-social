@@ -29,7 +29,7 @@ opencli plugin install github:lofe-w/opencli-social/social-weixin-channels
 Skill 缺失时，安装对应 Agent Skill：
 
 ```bash
-npx -y skills@latest add lofe-w/opencli-social --skill social-weixin-channels -g -y --copy
+npx -y skills@latest add lofe-w/opencli-social --skill social-weixin-channels -y -g
 ```
 
 安装完成只说明命令可发现。真正可发布前，必须确认 OpenCLI browser 可用、视频号已登录，并且目标账号明确。

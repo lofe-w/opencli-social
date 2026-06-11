@@ -20,7 +20,7 @@ does not require TypeScript transpilation.
 Companion Agent Skill:
 
 ```bash
-npx -y skills@latest add lofe-w/opencli-social --skill social-weixin-channels -g -y --copy
+npx -y skills@latest add lofe-w/opencli-social --skill social-weixin-channels -y -g
 npx -y skills@latest ls -g --json | rg 'social-weixin-channels'
 ```
 

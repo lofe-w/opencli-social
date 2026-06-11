@@ -18,7 +18,7 @@ does not require TypeScript transpilation.
 Companion Agent Skill:
 
 ```bash
-npx -y skills@latest add lofe-w/opencli-social --skill social-wechat-article -g -y --copy
+npx -y skills@latest add lofe-w/opencli-social --skill social-wechat-article -y -g
 npx -y skills@latest ls -g --json | rg 'social-wechat-article'
 ```
 
