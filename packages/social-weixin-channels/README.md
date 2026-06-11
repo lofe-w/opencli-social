@@ -7,8 +7,54 @@ The plugin does not store cookies or browser storage. OpenCLI profiles own login
 ## Install
 
 ```bash
+command -v opencli || npm install -g @jackwener/opencli@latest
 opencli plugin install github:lofe-w/opencli-social/social-weixin-channels
+opencli plugin list -f json
+opencli list -f json | rg 'social-weixin-channels'
+```
+
+If OpenCLI prints `esbuild not found` during installation, verify the command
+list before treating it as a failure. This package ships ESM JavaScript files and
+does not require TypeScript transpilation.
+
+Companion Agent Skill:
+
+```bash
+npx -y skills@latest add lofe-w/opencli-social --skill social-weixin-channels -g -y --copy
+npx -y skills@latest ls -g --json | rg 'social-weixin-channels'
+```
+
+Installation only verifies that the command and skill can be discovered. Browser
+session health, WeChat Channels login, and target account confirmation are
+separate readiness checks.
+
+## AI Agent Setup
+
+Agents should run setup in this order:
+
+```bash
+opencli doctor
 opencli social-weixin-channels doctor -f json
+opencli social-weixin-channels auth-status -f json
+```
+
+If login is required, start the HITL login flow:
+
+```bash
+opencli social-weixin-channels auth-begin --execute -f json
+```
+
+If the command returns `status=needs_human`, pass `message`, `url`,
+`screenshot_path`, and `resume_command` to the user. Wait for the user to scan
+the QR code, confirm on mobile, or select the correct account, then run the
+returned `resume_command`; do not invent a replacement.
+
+Verify ready state before publishing:
+
+```bash
+opencli social-weixin-channels auth-status -f json
+opencli social-weixin-channels accounts-list -f json
+opencli social-weixin-channels account-current -f json
 ```
 
 ## Commands

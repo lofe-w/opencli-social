@@ -2,6 +2,63 @@
 
 用于微信公众号运营的 OpenCLI 插件。当前覆盖文章发布链路，后续扩展评论、已发布内容和数据查询能力。
 
+## Install
+
+```bash
+command -v opencli || npm install -g @jackwener/opencli@latest
+opencli plugin install github:lofe-w/opencli-social/social-wechat-article
+opencli plugin list -f json
+opencli list -f json | rg 'social-wechat-article'
+```
+
+If OpenCLI prints `esbuild not found` during installation, verify the command
+list before treating it as a failure. This package ships ESM JavaScript files and
+does not require TypeScript transpilation.
+
+Companion Agent Skill:
+
+```bash
+npx -y skills@latest add lofe-w/opencli-social --skill social-wechat-article -g -y --copy
+npx -y skills@latest ls -g --json | rg 'social-wechat-article'
+```
+
+Installation only verifies that the command and skill can be discovered. Before
+the plugin can access a WeChat Official Account, configure a profile and verify
+token access as described below.
+
+## AI Agent setup
+
+Agents should run setup in this order:
+
+```bash
+OPENCLI_PROFILE=oa-a opencli social-wechat-article doctor -f json
+OPENCLI_PROFILE=oa-a opencli social-wechat-article auth-status -f json
+```
+
+If the profile is missing credentials, ask the user for the target profile alias,
+AppID, display name, and a safe way to provide AppSecret. Do not ask the user to
+paste AppSecret into chat. Prefer stdin from an environment variable:
+
+```bash
+printf '%s' "$WECHAT_APP_SECRET" | OPENCLI_PROFILE=oa-a opencli social-wechat-article auth-config \
+  --app-id "$WECHAT_APP_ID" \
+  --display-name "公众号A" \
+  --app-secret-stdin \
+  --execute \
+  -f json
+```
+
+Then verify ready state:
+
+```bash
+OPENCLI_PROFILE=oa-a opencli social-wechat-article auth-status -f json
+OPENCLI_PROFILE=oa-a opencli social-wechat-article doctor --check-token -f json
+```
+
+`missing_auth` means the plugin is installed but the selected OpenCLI profile has
+not been configured. Token verification can also fail if the current machine or
+server outbound IP is not in the WeChat Official Account API IP whitelist.
+
 ## OpenCLI profile 认证
 
 `social-wechat-article` 的账号只通过 OpenCLI profile 选择。每个 profile 拥有独立的公众号 `AppID`、`AppSecret`、access token cache 和审计输出；命令不读取旧式全局公众号凭据环境变量。
